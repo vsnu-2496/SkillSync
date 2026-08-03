@@ -57,12 +57,13 @@ const InterviewPrep = () => {
         api.get('/dashboard'),
         api.get('/interview/topics')
       ]);
-      const domain = analysis?.jobRole || dRes.data?.data?.topRole || "Web Development";
-      const cleanDomain = domain === "Not Analyzed" ? "Web Development" : domain;
+      const domain = analysis?.bestCareerRole || analysis?.jobRole || dRes.data?.data?.topRole || "Full Stack Developer";
+      const cleanDomain = domain === "Not Analyzed" ? "Full Stack Developer" : domain;
       setUserDomain(cleanDomain);
       setReadiness(analysis?.careerReadiness || dRes.data?.data?.metrics?.prepReadiness || 65);
       setTopics(tRes.data?.topics || []);
       setLoading(false);
+
     } catch (err) {
       console.error("Failed to load interview prep initial data:", err);
       setLoading(false);

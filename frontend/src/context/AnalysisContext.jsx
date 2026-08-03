@@ -4,7 +4,7 @@
  * Single Source of Truth for the user's latest career analysis.
  *
  * Automatically fetches from GET /api/resume/latest on mount / login / refresh.
- * All pages (Dashboard, Career Recommendations, Company Explorer, Interview Prep)
+ * All pages (Dashboard, Career Recommendations, Company Explorer, Interview Prep, Mock Interview)
  * read from this context — zero duplicate API calls.
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -65,6 +65,15 @@ export const AnalysisProvider = ({ children }) => {
     return fetchLatest();
   }, [fetchLatest]);
 
+  // Set an active analysis (e.g. from AnalysisHistory view/restore)
+  const setActiveAnalysis = useCallback((analysisData) => {
+    console.log('[AnalysisContext] Explicitly setting active analysis:', analysisData?.analysisId || analysisData?._id);
+    if (analysisData) {
+      setAnalysis(analysisData);
+      setHasAnalysis(true);
+    }
+  }, []);
+
   const clearAnalysis = useCallback(() => {
     console.log('[AnalysisContext] Clearing analysis context state.');
     setAnalysis(null);
@@ -80,6 +89,7 @@ export const AnalysisProvider = ({ children }) => {
       hasAnalysis,
       refresh: refreshAnalysis,
       refreshAnalysis,
+      setActiveAnalysis,
       clearAnalysis
     }}>
       {children}

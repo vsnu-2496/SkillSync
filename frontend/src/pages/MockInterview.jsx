@@ -37,19 +37,20 @@ const MockInterview = () => {
   const [phase, setPhase] = useState('setup');
   
   // Setup Options
-  const [domain, setDomain] = useState(analysis?.jobRole || 'Web Development');
+  const [domain, setDomain] = useState(analysis?.bestCareerRole || analysis?.jobRole || 'Full Stack Developer');
   const [difficulty, setDifficulty] = useState(
     (analysis?.careerReadiness || 65) >= 75 ? 'hard' : (analysis?.careerReadiness || 65) >= 55 ? 'medium' : 'easy'
   );
 
   useEffect(() => {
-    if (analysis?.jobRole) {
-      setDomain(analysis.jobRole);
-    }
-    if (analysis?.careerReadiness) {
-      setDifficulty(analysis.careerReadiness >= 75 ? 'hard' : analysis.careerReadiness >= 55 ? 'medium' : 'easy');
+    if (analysis) {
+      setDomain(analysis.bestCareerRole || analysis.jobRole || 'Full Stack Developer');
+      if (analysis.careerReadiness) {
+        setDifficulty(analysis.careerReadiness >= 75 ? 'hard' : analysis.careerReadiness >= 55 ? 'medium' : 'easy');
+      }
     }
   }, [analysis]);
+
   
   // Live Session State
   const [session, setSession] = useState(null);

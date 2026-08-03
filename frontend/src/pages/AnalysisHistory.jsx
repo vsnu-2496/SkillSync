@@ -14,6 +14,7 @@ import {
   Clock, Award, ChevronLeft, ChevronRight, Layers
 } from 'lucide-react';
 import api from '../api/axiosConfig';
+import { useAnalysis } from '../context/AnalysisContext';
 import PageHeader from '../components/layout/PageHeader';
 import { GlassCard, Button, Badge, ProgressBar } from '../components/ui';
 
@@ -225,6 +226,7 @@ const HistoryCard = ({ item, onView, onDelete, onReanalyze }) => {
 // ─── Main Page ────────────────────────────────────────────────────────
 const AnalysisHistory = () => {
   const navigate = useNavigate();
+  const { setActiveAnalysis } = useAnalysis();
 
   const [analyses, setAnalyses]       = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -284,6 +286,7 @@ const AnalysisHistory = () => {
       const res = await api.get(`/resume/history/${id}`);
       if (res.data.success) {
         const data = res.data.data;
+        if (setActiveAnalysis) setActiveAnalysis(data);
         sessionStorage.setItem('careerAnalysis', JSON.stringify({
           analysisId: data._id,
           atsScore: data.atsScore,
@@ -313,6 +316,7 @@ const AnalysisHistory = () => {
         }));
         navigate('/career-report');
       }
+
     } catch (err) {
       setError('Could not load report. Please try again.');
     }
