@@ -11,6 +11,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { Button, Input } from '../components/ui';
+import Modal from '../components/ui/Modal';
+import api from '../api/axiosConfig';
 
 const Login = () => {
   const [email, setEmail]         = useState('');
@@ -18,6 +20,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError]         = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Forgot Password Modal state
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState('');
+  const [forgotError, setForgotError] = useState('');
   
   const { login } = useAuth();
   const navigate  = useNavigate();
@@ -66,7 +75,14 @@ const Login = () => {
           
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             <Input label="Corporate Email" icon={Mail} type="email" required placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} error={error} />
-            <Input label="Password" icon={Lock} type="password" required placeholder="••••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <div>
+              <Input label="Password" icon={Lock} type="password" required placeholder="••••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => { setIsForgotOpen(true); setForgotMessage(''); setForgotError(''); }} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}>
+                  Forgot Password?
+                </button>
+              </div>
+            </div>
             <Button type="submit" fullWidth loading={isSubmitting} icon={ArrowRight}>Initialize Sync</Button>
           </form>
 
@@ -75,6 +91,37 @@ const Login = () => {
           </div>
         </div>
       </div>
+      <Modal 
+        isOpen={isForgotOpen} 
+        onClose={() => setIsForgotOpen(false)} 
+        title="Recover Access" 
+        subtitle="Request access key mapping reset token"
+        maxWidth="500px"
+      >
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          setForgotError('');
+          setForgotMessage('');
+          setForgotLoading(true);
+          try {
+            const res = await api.post('/auth/forgot-password', { email: forgotEmail });
+            setForgotMessage(res.data.message || 'Reset link simulated and logged to system console.');
+            setForgotEmail('');
+          } catch (err) {
+            setForgotError(err.response?.data?.error || 'Uplink failed. Check credentials.');
+          } finally {
+            setForgotLoading(false);
+          }
+        }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {forgotError && <p style={{ fontSize: '0.85rem', color: '#f43f5e', fontWeight: 600 }}>{forgotError}</p>}
+          {forgotMessage && <p style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>{forgotMessage}</p>}
+          <Input label="Reset Target Email" icon={Mail} type="email" required placeholder="name@company.com" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <Button type="button" variant="ghost" fullWidth onClick={() => setIsForgotOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="primary" fullWidth loading={forgotLoading}>Send Reset Request</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

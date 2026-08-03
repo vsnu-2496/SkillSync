@@ -194,7 +194,7 @@ const InterviewVault = () => {
         localStorage.setItem('interviewVaultData', JSON.stringify(updated));
         
         if (!id.toString().startsWith('LOCAL_')) {
-          await api.delete(`/interviews/${id}`);
+          await api.delete(`/vault/delete/${id}`);
         }
       } catch (err) {
         console.error("Deletion sync failed:", err);

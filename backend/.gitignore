@@ -1,0 +1,16 @@
+node_modules/
+.env
+uploads/
+npm-debug.log*
+.DS_Store
+
+# Temporary and debug files — never commit these
+tmp/
+*.tmp
+scratch_*.js
+fix_*.js
+inspect_*.js
+debug_*.js
+test_gemini.js
+verify_*.js
+smoke_test.js

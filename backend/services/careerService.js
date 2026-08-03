@@ -1,23 +1,63 @@
 const ROLE_DB = [
   {
-    role: "Full Stack Developer",
-    requiredSkills: ["Javascript", "React", "Node.js", "Express", "HTML", "CSS", "SQL", "Git"]
-  },
-  {
-    role: "Backend Engineer",
-    requiredSkills: ["Python", "Node.js", "Java", "SQL", "MongoDB", "Docker", "AWS", "Git"]
+    role: "Web Development",
+    requiredSkills: ["HTML", "CSS", "Javascript", "React", "Node.js", "SQL", "Git"]
   },
   {
     role: "Frontend Developer",
-    requiredSkills: ["Javascript", "TypeScript", "React", "HTML", "CSS", "Tailwind", "Git"]
+    requiredSkills: ["Javascript", "TypeScript", "React", "HTML", "CSS", "Tailwind", "Vite", "Git"]
+  },
+  {
+    role: "Backend Engineer",
+    requiredSkills: ["Python", "Node.js", "Express", "Java", "SQL", "MongoDB", "Docker", "Git"]
+  },
+  {
+    role: "Full Stack Developer",
+    requiredSkills: ["Javascript", "React", "Node.js", "Express", "HTML", "CSS", "SQL", "Git", "Docker"]
+  },
+  {
+    role: "AI/ML Engineer",
+    requiredSkills: ["Python", "Machine Learning", "AI", "Tensorflow", "PyTorch", "NumPy", "Deep Learning"]
   },
   {
     role: "Data Scientist",
-    requiredSkills: ["Python", "Machine Learning", "Pandas", "SQL", "Data Analysis", "Tensorflow", "AI"]
+    requiredSkills: ["Python", "Machine Learning", "Pandas", "SQL", "Data Analysis", "Tensorflow", "AI", "PowerBI"]
+  },
+  {
+    role: "Cyber Security Analyst",
+    requiredSkills: ["Linux", "Python", "SQL", "Git", "Security Audits", "Networking", "Cryptography"]
+  },
+  {
+    role: "Cloud Computing Architect",
+    requiredSkills: ["AWS", "Azure", "GCP", "Kubernetes", "Docker", "Linux", "Terraform"]
   },
   {
     role: "DevOps Engineer",
-    requiredSkills: ["Docker", "Kubernetes", "AWS", "Git", "Jenkins", "Terraform", "Linux"]
+    requiredSkills: ["Docker", "Kubernetes", "AWS", "Git", "Jenkins", "Terraform", "Linux", "Ansible"]
+  },
+  {
+    role: "Software Testing Engineer",
+    requiredSkills: ["Java", "Python", "Selenium", "Git", "Unit Testing", "Jira", "Postman"]
+  },
+  {
+    role: "Mobile Development Engineer",
+    requiredSkills: ["Kotlin", "Swift", "React", "Javascript", "Git", "Firebase", "TypeScript"]
+  },
+  {
+    role: "UI UX Designer",
+    requiredSkills: ["Figma", "HTML", "CSS", "Bootstrap", "Tailwind", "Creativity", "Communication"]
+  },
+  {
+    role: "Business Analyst",
+    requiredSkills: ["SQL", "Tableau", "PowerBI", "Data Analysis", "Communication", "Management", "Jira"]
+  },
+  {
+    role: "Product Manager",
+    requiredSkills: ["Product Management", "Figma", "Jira", "Communication", "Leadership", "Management", "Agility"]
+  },
+  {
+    role: "Software Engineer",
+    requiredSkills: ["Java", "Python", "C++", "C#", "SQL", "Git", "Problem Solving", "Linux"]
   }
 ];
 

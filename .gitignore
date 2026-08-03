@@ -3,6 +3,17 @@ node_modules/
 dist/
 build/
 
+# Temporary and debug files — never commit these
+tmp/
+*.tmp
+scratch_*.js
+fix_*.js
+inspect_*.js
+debug_*.js
+test_gemini.js
+verify_*.js
+smoke_test.js
+
 # Environment Variables
 .env
 .env.local

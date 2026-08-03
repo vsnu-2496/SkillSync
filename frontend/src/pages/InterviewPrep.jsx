@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  MessagesSquare, 
   Search, 
-  TrendingUp,
   Zap, 
   CheckCircle2, 
   ArrowRight,
   Brain,
-  Cpu,
   Trophy,
   X,
-  AlertCircle
+  Clock,
+  LayoutGrid,
+  ExternalLink,
+  BookOpen
 } from 'lucide-react';
 import PageHeader from '../components/layout/PageHeader';
 import { Button, GlassCard, Badge, ProgressBar } from '../components/ui';
@@ -21,66 +21,76 @@ const InterviewPrep = () => {
   const [loading, setLoading] = useState(true);
   const [userDomain, setUserDomain] = useState("Web Development");
   const [readiness, setReadiness] = useState(0);
+  const [topics, setTopics] = useState([]);
+  const [referenceLinks, setReferenceLinks] = useState([]);
   
   // Test Session State
   const [isTestMode, setIsTestMode] = useState(false);
   const [answers, setAnswers] = useState({});
   const [testResults, setTestResults] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     fetchInitialData();
   }, []);
 
+  useEffect(() => {
+    if (isTestMode && timeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      submitTest(); // Auto-submit on timeout
+    }
+    return () => clearInterval(timerRef.current);
+  }, [isTestMode, timeLeft]);
+
   const fetchInitialData = async () => {
     try {
-      const dRes = await api.get('/dashboard');
+      const [dRes, tRes] = await Promise.all([
+        api.get('/dashboard'),
+        api.get('/interview/topics')
+      ]);
       const domain = dRes.data.data.topRole || "Web Development";
-      setUserDomain(domain === "Not Analyzed" ? "Web Development" : domain);
+      const cleanDomain = domain === "Not Analyzed" ? "Web Development" : domain;
+      setUserDomain(cleanDomain);
       setReadiness(dRes.data.data.metrics.prepReadiness);
+      setTopics(tRes.data.topics || []);
       setLoading(false);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load interview prep initial data:", err);
       setLoading(false);
     }
   };
 
-  const startTest = async () => {
+  const startTest = async (topic = null) => {
     setLoading(true);
+    const targetTopic = topic || userDomain;
     try {
-      // 1. Initialize Neural Session
       await api.post('/interview/start-test');
       
-      // 2. Fetch Questions
-      const qRes = await api.get(`/interview/questions?domain=${encodeURIComponent(userDomain)}`);
+      const urlParams = new URLSearchParams(window.location.search);
+      const companyParam = urlParams.get('company');
+      
+      const url = companyParam 
+        ? `/interview/questions?company=${encodeURIComponent(companyParam)}`
+        : `/interview/questions?domain=${encodeURIComponent(targetTopic)}`;
+        
+      const qRes = await api.get(url);
       if (qRes.data.questions && qRes.data.questions.length > 0) {
         setQuestions(qRes.data.questions);
+        setReferenceLinks(qRes.data.referenceLinks || []);
         setAnswers({});
         setTestResults(null);
         setIsTestMode(true);
-      } else {
-        // Silent fallback to Java if domain still has 0 questions (safety)
-        const retryRes = await api.get('/interview/questions?domain=Java');
-        setQuestions(retryRes.data.questions);
-        setIsTestMode(true);
+        setTimeLeft(600); // 10 minutes
       }
     } catch (err) {
-      console.error("Neural Error Object:", err);
-      const errorMsg = err.response?.data?.error || err.message;
-      const statusCode = err.response?.status || "LOCAL";
-      
-      if (statusCode === 404) {
-        // Try a heartbeat to verify if /api is reachable at all
-        try {
-          const heartRes = await api.get('/heartbeat');
-          console.log("Heartbeat Check:", heartRes.data);
-          alert(`404 Error: Server is alive but /interview/start-test is missing. Heartbeat: ${heartRes.data.status}`);
-        } catch (hErr) {
-          alert(`Critical: Backend on port 5000 is UNREACHABLE. Ensure 'npm start' is running in backend folder.`);
-        }
-      } else {
-        alert(`Connection Refused [${statusCode}]: ${errorMsg}`);
-      }
+      console.error("Failed to start assessment:", err);
     } finally {
       setLoading(false);
     }
@@ -91,12 +101,8 @@ const InterviewPrep = () => {
   };
 
   const submitTest = async () => {
-    if (Object.keys(answers).length < questions.length) {
-      alert("Please complete all neural nodes before submission.");
-      return;
-    }
-
     setSubmitting(true);
+    clearInterval(timerRef.current);
     try {
       const res = await api.post('/interview/submit', {
         answers,
@@ -105,10 +111,17 @@ const InterviewPrep = () => {
       setTestResults(res.data);
       setReadiness(res.data.readiness);
     } catch (err) {
-      alert("Submission Synchronization Failed.");
+      console.error("Submission failed:", err);
     } finally {
       setSubmitting(false);
+      setTimeLeft(null);
     }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
@@ -116,13 +129,14 @@ const InterviewPrep = () => {
       <PageHeader 
         title="Execution" 
         gradient="Interview Prep" 
-        subtitle="Domain-specific assessment engine driven by your professional skill manifest."
+        subtitle="Domain-specific assessment engine driven by your professional skill manifest and official learning resources."
         badge={<Badge variant="success">Neural Sync Active</Badge>}
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem' }}>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* Main Assessment Card */}
           <GlassCard style={{ border: '1px solid rgba(99, 102, 241, 0.2)', position: 'relative', overflow: 'hidden', padding: '2.5rem' }}>
             <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', color: 'rgba(99, 102, 241, 0.05)' }}>
               <Brain size={160} />
@@ -134,18 +148,76 @@ const InterviewPrep = () => {
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem' }}>Neural Test: {userDomain}</h3>
                 <p style={{ color: '#94a3b8', fontSize: '1rem', fontWeight: 500 }}>
-                  A targeted MCQ assessment curated to calibrate your placement readiness for {userDomain} roles.
+                  A targeted MCQ assessment curated to calibrate your placement readiness.
                 </p>
               </div>
-              <Button size="lg" icon={ArrowRight} onClick={startTest}>Begin Assessment</Button>
+              <Button size="lg" icon={ArrowRight} onClick={() => startTest()}>Begin Assessment</Button>
             </div>
           </GlassCard>
 
-          {/* Guidelines */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
-             <FeatureItem icon={<Cpu size={20} />} title="Domain Specific" desc="Tailored to your resume analysis." />
-             <FeatureItem icon={<CheckCircle2 size={20} />} title="Real-time Scoring" desc="Immediate feedback on submission." />
-             <FeatureItem icon={<TrendingUp size={20} />} title="Dashboard Sync" desc="Updates your overall readiness." />
+          {/* Official Learning & Reference Section */}
+          <GlassCard style={{ padding: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <BookOpen size={20} color="#10b981" />
+              <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white' }}>Official Study Resources</h4>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
+              <a href="https://roadmap.sh" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>Roadmap.sh</p>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem' }}>Interactive Developer Paths</p>
+                  </div>
+                  <ExternalLink size={16} color="#10b981" />
+                </div>
+              </a>
+              <a href="https://developer.mozilla.org" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>MDN Web Docs</p>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem' }}>Standard Web Reference</p>
+                  </div>
+                  <ExternalLink size={16} color="#6366f1" />
+                </div>
+              </a>
+              <a href="https://www.geeksforgeeks.org" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>GeeksforGeeks</p>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem' }}>Algorithms & Practice</p>
+                  </div>
+                  <ExternalLink size={16} color="#f59e0b" />
+                </div>
+              </a>
+              <a href="https://skillbuilder.aws" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ color: 'white', fontWeight: 800, fontSize: '0.9rem' }}>AWS Skill Builder</p>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem' }}>Cloud Architecture</p>
+                  </div>
+                  <ExternalLink size={16} color="#a855f7" />
+                </div>
+              </a>
+            </div>
+          </GlassCard>
+
+          {/* Topic-wise Challenges */}
+          <div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                <LayoutGrid size={20} color="#6366f1" />
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'white' }}>Topic Challenges</h4>
+             </div>
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.25rem' }}>
+                {(topics || []).map(topic => (
+                   <GlassCard key={topic} style={{ padding: '1.5rem', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <h5 style={{ color: 'white', fontWeight: 800, fontSize: '1rem', marginBottom: '1rem' }}>{topic}</h5>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>10 Questions</span>
+                         <Button size="sm" variant="ghost" onClick={() => startTest(topic)}>Solve</Button>
+                      </div>
+                   </GlassCard>
+                ))}
+             </div>
           </div>
         </div>
 
@@ -161,6 +233,18 @@ const InterviewPrep = () => {
             </div>
             <ProgressBar progress={readiness} color="#f59e0b" />
           </GlassCard>
+
+          <GlassCard style={{ padding: '1.5rem', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.1)' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <Clock size={18} color="#f59e0b" />
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f59e0b' }}>Mock Test Rules</h4>
+             </div>
+             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <RuleItem text="10 Questions per set" />
+                <RuleItem text="10 Minute time limit" />
+                <RuleItem text="Auto-submission on timeout" />
+             </ul>
+          </GlassCard>
         </div>
       </div>
 
@@ -172,10 +256,18 @@ const InterviewPrep = () => {
               
               {!testResults ? (
                 <>
-                  <div style={{ marginBottom: '3rem' }}>
-                    <Badge variant="primary" style={{ marginBottom: '1rem' }}>Active Assessment</Badge>
-                    <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem' }}>{userDomain} Proficiency</h2>
-                    <p style={{ color: '#64748b', fontWeight: 500 }}>Select the correct option for each neural node. Precision is critical.</p>
+                  <div style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <Badge variant="primary" style={{ marginBottom: '1rem' }}>Active Assessment</Badge>
+                      <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem' }}>Proficiency Test</h2>
+                      <p style={{ color: '#64748b', fontWeight: 500 }}>Select the correct option for each neural node.</p>
+                    </div>
+                    {timeLeft !== null && (
+                      <div style={{ background: timeLeft < 60 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.05)', padding: '1rem 1.5rem', borderRadius: '16px', border: `1px solid ${timeLeft < 60 ? '#ef4444' : 'var(--border)'}`, textAlign: 'center' }}>
+                         <p style={{ fontSize: '0.7rem', fontWeight: 800, color: timeLeft < 60 ? '#ef4444' : '#64748b', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Time Remaining</p>
+                         <p style={{ fontSize: '1.5rem', fontWeight: 900, color: timeLeft < 60 ? '#ef4444' : 'white' }}>{formatTime(timeLeft)}</p>
+                      </div>
+                    )}
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem', marginBottom: '3rem' }}>
@@ -216,18 +308,30 @@ const InterviewPrep = () => {
                 </>
               ) : (
                 <div style={{ textAlign: 'center' }}>
-                   <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', margin: '0 auto 2.5rem' }}>
-                      <CheckCircle2 size={70} />
+                   <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', margin: '0 auto 2rem' }}>
+                      <CheckCircle2 size={60} />
                    </div>
-                   <h2 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white', marginBottom: '1rem' }}>Assessment Complete</h2>
-                   <p style={{ color: '#64748b', marginBottom: '3rem', fontSize: '1.1rem' }}>Your performance has been synthesized with your professional manifest.</p>
+                   <h2 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem' }}>Assessment Completed</h2>
+                   <p style={{ color: '#64748b', marginBottom: '2.5rem', fontSize: '1rem' }}>Detailed breakdown with official explanations:</p>
                    
-                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '4rem' }}>
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '3rem' }}>
                       <ResultStat label="Test Score" value={`${testResults.score}%`} color="#6366f1" />
                       <ResultStat label="Accuracy" value={`${testResults.correct}/${testResults.total}`} color="#10b981" />
                       <ResultStat label="Combined Readiness" value={`${testResults.readiness}%`} color="#f59e0b" />
                    </div>
-                   
+
+                   {/* Explanations List */}
+                   <div style={{ textAlign: 'left', marginBottom: '3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                     <h4 style={{ color: 'white', fontWeight: 800 }}>Explanations & Review</h4>
+                     {(testResults.results || []).map((r, idx) => (
+                       <div key={idx} style={{ padding: '1rem', borderRadius: '12px', background: r.isCorrect ? 'rgba(16,185,129,0.05)' : 'rgba(239,68,68,0.05)', border: `1px solid ${r.isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
+                         <p style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }}>{idx + 1}. {r.question}</p>
+                         <p style={{ color: r.isCorrect ? '#10b981' : '#ef4444', fontSize: '0.8rem', fontWeight: 700 }}>Your Answer: {r.userAnswer || 'Not answered'} {r.isCorrect ? '✓' : `(Correct: ${r.correctAnswer})`}</p>
+                         <p style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '0.25rem' }}>Explanation: {r.explanation}</p>
+                       </div>
+                     ))}
+                   </div>
+
                    <Button variant="ghost" fullWidth size="lg" onClick={() => setIsTestMode(false)}>Return to Prep Terminal</Button>
                 </div>
               )}
@@ -238,18 +342,17 @@ const InterviewPrep = () => {
   );
 };
 
-const FeatureItem = ({ icon, title, desc }) => (
-  <GlassCard style={{ padding: '1.5rem' }}>
-    <div style={{ color: '#6366f1', marginBottom: '1rem' }}>{icon}</div>
-    <h5 style={{ color: 'white', fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.5rem' }}>{title}</h5>
-    <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 500 }}>{desc}</p>
-  </GlassCard>
+const RuleItem = ({ text }) => (
+  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8' }}>
+     <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#f59e0b' }}></div>
+     {text}
+  </li>
 );
 
 const ResultStat = ({ label, value, color }) => (
-  <div style={{ padding: '2rem', borderRadius: '20px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)' }}>
-     <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>{label}</p>
-     <p style={{ fontSize: '2.25rem', fontWeight: 900, color }}>{value}</p>
+  <div style={{ padding: '1.5rem', borderRadius: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)' }}>
+     <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>{label}</p>
+     <p style={{ fontSize: '2rem', fontWeight: 900, color }}>{value}</p>
   </div>
 );
 

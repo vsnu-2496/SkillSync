@@ -15,7 +15,8 @@ import {
   Building2,
   Workflow,
   Cpu,
-  ShieldPlus
+  ShieldPlus,
+  Brain
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,8 +30,13 @@ const INTELLIGENCE_ITEMS = [
 
 const EXECUTION_ITEMS = [
   { name: 'Interview Prep',   icon: MessagesSquare, path: '/interview-prep' },
+  { name: 'Mock Interview',   icon: Brain,          path: '/mock-interview' },
   { name: 'Company Explorer', icon: Building2,      path: '/companies' },
   { name: 'Interview Vault',   icon: ShieldPlus,     path: '/interview-vault' },
+];
+
+const ADMIN_ITEMS = [
+  { name: 'Admin Dashboard',  icon: ShieldPlus, path: '/admin' }
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -104,21 +110,41 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Navigation */}
       <div style={{ flex: 1, padding: '1.5rem 1rem', overflowY: 'auto' }}>
         
-        {/* Intelligence Group */}
-        <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Intelligence</p>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '2.5rem' }}>
-          {INTELLIGENCE_ITEMS.map((item) => (
-            <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
-          ))}
-        </nav>
+        {/* Intelligence Group (Hidden for Admins) */}
+        {user?.role !== 'admin' && (
+          <>
+            <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Intelligence</p>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '2.5rem' }}>
+              {INTELLIGENCE_ITEMS.map((item) => (
+                <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
+              ))}
+            </nav>
+          </>
+        )}
 
-        {/* Execution Group */}
-        <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution (EasyPrep)</p>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '2.5rem' }}>
-          {EXECUTION_ITEMS.map((item) => (
-            <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
-          ))}
-        </nav>
+        {/* Execution Group (Hidden for Admins) */}
+        {user?.role !== 'admin' && (
+          <>
+            <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution (EasyPrep)</p>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '2.5rem' }}>
+              {EXECUTION_ITEMS.map((item) => (
+                <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
+              ))}
+            </nav>
+          </>
+        )}
+
+        {/* Admin Group (Conditional) */}
+        {user?.role === 'admin' && (
+          <>
+            <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Admin Controls</p>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '2.5rem' }}>
+              {ADMIN_ITEMS.map((item) => (
+                <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
+              ))}
+            </nav>
+          </>
+        )}
 
         {/* Configuration Group */}
         <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Configuration</p>
@@ -127,7 +153,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <CreditCard size={18} />
             <span>Billing</span>
           </Link>
-          <Link to="#" style={linkStyle(false)}>
+          <Link to="/settings" style={linkStyle(location.pathname === '/settings')}>
             <Settings size={18} />
             <span>Settings</span>
           </Link>

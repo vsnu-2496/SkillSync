@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: skillsync-backend
+    env: node
+    repo: https://github.com/<your-org>/<your-repo>
+    branch: main
+    plan: starter
+    buildCommand: "cd SkillSyncAI/backend && npm install"
+    startCommand: "cd SkillSyncAI/backend && npm start"
+    envVars:
+      - key: MONGODB_URI
+        fromDatabase: false
+        value: $MONGODB_URI
+      - key: JWT_SECRET
+        value: $JWT_SECRET
+      - key: JWT_REFRESH_SECRET
+        value: $JWT_REFRESH_SECRET
+      - key: FRONTEND_URL
+        value: $FRONTEND_URL

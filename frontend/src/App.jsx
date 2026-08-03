@@ -15,6 +15,11 @@ const InterviewVault = lazy(() => import('./pages/InterviewVault'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
+const MockInterview = lazy(() => import('./pages/MockInterview'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const CareerReport = lazy(() => import('./pages/CareerReport'));
 
 // Global Loading State
 const LoadingFallback = () => (
@@ -40,6 +45,7 @@ function App() {
             {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             
             {/* Protected Portal Routes (SkillSync x EasyPrep Unified) */}
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -49,9 +55,17 @@ function App() {
             
             {/* EasyPrep Execution Modules */}
             <Route path="/interview-prep" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
+            <Route path="/mock-interview" element={<PrivateRoute><MockInterview /></PrivateRoute>} />
             <Route path="/companies" element={<PrivateRoute><CompanyExplorer /></PrivateRoute>} />
             <Route path="/interview-vault" element={<PrivateRoute><InterviewVault /></PrivateRoute>} />
             <Route path="/how-it-works" element={<PrivateRoute><HowItWorks /></PrivateRoute>} />
+            <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+            
+            {/* Career Readiness Report */}
+            <Route path="/career-report" element={<PrivateRoute><CareerReport /></PrivateRoute>} />
+            
+            {/* Admin Dashboard */}
+            <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
             
             {/* Redirects */}
             <Route path="/" element={<Navigate to="/dashboard" />} />
