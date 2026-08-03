@@ -239,6 +239,7 @@ exports.analyzeCareer = async (req, res) => {
           jobDescription: jobDescription.substring(0, 2000),
           jobDescriptionSource: jdSource,
           resumeTextSnippet: resumeText.substring(0, 500),
+          bestCareerDomain: enriched.bestCareerDomain || 'Software & Web Engineering',
           bestCareerRole: enriched.bestCareerRole,
           bestCareerMatchPercentage: enriched.bestCareerMatchPercentage,
           rankedCareerRoles: enriched.rankedCareerRoles,
@@ -510,6 +511,7 @@ exports.getLatestAnalysis = async (req, res) => {
     const isWeb = skillsLower.some(s => ['react', 'node', 'javascript', 'express', 'mongodb', 'html', 'css'].includes(s));
     const isData = skillsLower.some(s => ['python', 'pandas', 'machine learning', 'sql', 'tensorflow', 'r'].includes(s));
 
+    const domain = analysis.bestCareerDomain || (isData ? 'Data Science & AI Analytics' : (isWeb ? 'Full Stack & Web Engineering' : 'Software Engineering'));
     let bestRole = analysis.bestCareerRole || analysis.jobRole || (isData ? 'Data Scientist' : (isWeb ? 'Full Stack Developer' : 'Software Engineer'));
     let bestMatch = analysis.bestCareerMatchPercentage || Math.max(75, analysis.careerReadiness || 85);
 
@@ -684,6 +686,7 @@ exports.getLatestAnalysis = async (req, res) => {
       fromCache:     analysis.fromCache,
       jdSource:      analysis.jobDescriptionSource,
       // Core scores & Evidence-Based Career Recommendations
+      bestCareerDomain:          domain,
       bestCareerRole:            bestRole,
       bestCareerMatchPercentage: bestMatch,
       rankedCareerRoles:         rankedRoles,

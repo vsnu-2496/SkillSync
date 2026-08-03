@@ -105,6 +105,7 @@ OUTPUT FORMAT — RETURN STRICT JSON ONLY:
 Return ONLY a valid JSON object without markdown fences:
 
 {
+  "bestCareerDomain": "Web & Cloud Engineering",
   "bestCareerRole": "Full Stack Developer",
   "bestCareerMatchPercentage": 92,
   "rankedCareerRoles": [
@@ -230,6 +231,7 @@ const parseGeminiResponse = (rawText) => {
   const certificationScore= clamped(parsed.certificationScore, 0, 25, 15);
   const careerReadiness   = interestScore + projectScore + internshipScore + certificationScore;
 
+  const bestDomain = parsed.bestCareerDomain || (parsed.extractedSkills?.some(s => s.toLowerCase().includes('python')) ? 'Data Science & AI' : 'Web & Cloud Engineering');
   const bestRole = parsed.bestCareerRole || parsed.jobRole || 'Full Stack Developer';
   const bestMatch = clamped(parsed.bestCareerMatchPercentage, 50, 100, 88);
 
@@ -286,6 +288,7 @@ const parseGeminiResponse = (rawText) => {
     : fallbackRanked;
 
   return {
+    bestCareerDomain: bestDomain,
     bestCareerRole: bestRole,
     bestCareerMatchPercentage: bestMatch,
     rankedCareerRoles,

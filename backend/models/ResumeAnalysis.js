@@ -50,9 +50,11 @@ const ResumeAnalysisSchema = new mongoose.Schema({
   resumeTextSnippet: { type: String, default: '' },
 
   // ─── Evidence-Based Career Recommendations (AI Output) ─────────────
+  bestCareerDomain: { type: String, default: 'Software & Web Engineering' },
   bestCareerRole: { type: String, default: 'Full Stack Developer' },
   bestCareerMatchPercentage: { type: Number, default: 88 },
   rankedCareerRoles: { type: [RankedRoleSchema], default: [] },
+
 
   // ─── Core AI Scores ───────────────────────────────────────────────
   atsScore:            { type: Number, default: 0, min: 0, max: 100 },

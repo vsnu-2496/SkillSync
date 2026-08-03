@@ -3,23 +3,20 @@
  * ─────────────────────────────────────────────────────────────────────
  * THE PRIMARY OUTPUT FEATURE OF THE PLATFORM.
  *
- * Ranks top career roles driven by AI analysis from ResumeAnalysis context.
- *
- * Displays Cards for Ranked Roles (e.g. #1 Full Stack 92%, #2 Backend 89%...):
- *  - Role Title & Match Confidence %
- *  - Why Recommended (Evidence Rationale from resume)
- *  - Matched Skills & Missing Skills
- *  - Salary & Growth Potential
- *  - Hiring Companies
- *  - Improvement Roadmap
- *  - Required Certifications & Projects
- *  - Button → Explore Companies (/companies)
+ * Displays:
+ *  - Best Career Domain
+ *  - Top Job Roles Ranked with Confidence Percentages
+ *  - Why AI Selected Them (Evidence Rationale)
+ *  - Skills Supporting Each Recommendation (Matched Skills)
+ *  - Missing Skills for Each Role
+ *  - Estimated Readiness After Improvements
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   Briefcase, Sparkles, Building2, CheckCircle2, AlertCircle,
-  ArrowRight, ShieldCheck, Zap, Award, BookOpen, Layers, DollarSign
+  ArrowRight, ShieldCheck, Zap, Award, BookOpen, Layers, DollarSign,
+  TrendingUp, Compass
 } from 'lucide-react';
 import { useAnalysis } from '../context/AnalysisContext';
 import PageHeader from '../components/layout/PageHeader';
@@ -63,8 +60,10 @@ const CareerRecommendations = () => {
     );
   }
 
+  const bestDomain = analysis.bestCareerDomain || 'Software & Web Engineering';
   const bestRole = analysis.bestCareerRole || analysis.jobRole || 'Full Stack Developer';
   const bestMatch = analysis.bestCareerMatchPercentage || 88;
+  const estimatedReadiness = analysis.estimatedScoreAfterImprovements || Math.min(98, bestMatch + 10);
 
   // Ranked roles array directly from ResumeAnalysis context
   const rankedRoles = (analysis.rankedCareerRoles && analysis.rankedCareerRoles.length > 0)
@@ -92,7 +91,7 @@ const CareerRecommendations = () => {
       <PageHeader
         title="Career"
         gradient="Recommendations"
-        subtitle="Ranked career roles derived automatically from your technical skills, projects, and experience."
+        subtitle={`Best Career Domain: ${bestDomain}. Ranked roles derived automatically from your technical background.`}
         badge={<Badge variant="success" icon={ShieldCheck}>Single Source of Truth Active</Badge>}
       />
 
@@ -101,22 +100,29 @@ const CareerRecommendations = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-              <Sparkles size={16} color="#6366f1" />
-              <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                #1 HIGHEST MATCHING CAREER ROLE
+              <Compass size={16} color="#6366f1" />
+              <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                PRIMARY CAREER DOMAIN: {bestDomain.toUpperCase()}
               </span>
             </div>
             <h1 style={{ fontSize: '2.4rem', fontWeight: 900, color: 'white', margin: '0.2rem 0' }}>
-              {bestRole}
+              #1 {bestRole}
             </h1>
             <p style={{ fontSize: '0.9rem', color: '#94a3b8', maxWidth: '650px', lineHeight: 1.5 }}>
               {(rankedRoles[0] && rankedRoles[0].whyRecommended) || analysis.whyThisScore || 'Evidence-based career fit evaluated from your extracted skills and project background.'}
             </p>
           </div>
 
-          <div style={{ textAlign: 'center', padding: '1.25rem 2.25rem', background: 'rgba(15,23,42,0.7)', borderRadius: '20px', border: '1px solid rgba(99,102,241,0.2)' }}>
-            <p style={{ fontSize: '3rem', fontWeight: 900, color: '#10b981', lineHeight: 1 }}>{bestMatch}%</p>
-            <p style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '0.4rem' }}>Suitability Confidence</p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ textAlign: 'center', padding: '1rem 1.5rem', background: 'rgba(15,23,42,0.7)', borderRadius: '18px', border: '1px solid rgba(16,185,129,0.2)' }}>
+              <p style={{ fontSize: '2.5rem', fontWeight: 900, color: '#10b981', lineHeight: 1 }}>{bestMatch}%</p>
+              <p style={{ fontSize: '0.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginTop: '0.3rem' }}>Current Match</p>
+            </div>
+
+            <div style={{ textAlign: 'center', padding: '1rem 1.5rem', background: 'rgba(15,23,42,0.7)', borderRadius: '18px', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <p style={{ fontSize: '2.5rem', fontWeight: 900, color: '#6366f1', lineHeight: 1 }}>{estimatedReadiness}%</p>
+              <p style={{ fontSize: '0.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginTop: '0.3rem' }}>Target Readiness</p>
+            </div>
           </div>
         </div>
       </GlassCard>
@@ -124,7 +130,7 @@ const CareerRecommendations = () => {
       {/* ── RANKED CAREER CARDS LIST ── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Layers size={20} color="#6366f1" /> Ranked Career Roles ({rankedRoles.length})
+          <Layers size={20} color="#6366f1" /> Ranked Career Roles in {bestDomain} ({rankedRoles.length})
         </h3>
 
         {rankedRoles.map((item, idx) => (
@@ -152,16 +158,16 @@ const CareerRecommendations = () => {
               </Link>
             </div>
 
-            {/* Why Recommended */}
+            {/* Why AI Selected This Role */}
             <div style={{ padding: '1rem 1.25rem', borderRadius: '14px', background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.12)', marginBottom: '1.25rem' }}>
-              <p style={{ fontSize: '0.68rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>Why Recommended (Evidence Rationale)</p>
+              <p style={{ fontSize: '0.68rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>Why AI Selected This Role</p>
               <p style={{ fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>{item.whyRecommended}</p>
             </div>
 
-            {/* Skills Grid */}
+            {/* Skills Grid: Supporting vs Missing */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
               <div>
-                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Matched Skills</p>
+                <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Supporting Resume Skills</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                   {(item.matchedSkills || []).map(s => (
                     <span key={s} style={{ padding: '0.25rem 0.65rem', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981', fontSize: '0.75rem', fontWeight: 700 }}>
@@ -198,7 +204,7 @@ const CareerRecommendations = () => {
               </div>
             )}
 
-            {/* Certifications, Projects & Companies Footer */}
+            {/* Footer Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               <div>
                 <p style={{ fontSize: '0.65rem', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Required Certifications</p>
