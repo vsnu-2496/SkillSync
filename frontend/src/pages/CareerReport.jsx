@@ -61,16 +61,18 @@ const CareerReport = () => {
   const { analysis, loading: contextLoading } = useAnalysis();
 
   useEffect(() => {
-    // Load from sessionStorage if present (e.g. fresh navigation), else fallback to global AnalysisContext
-    const stored = sessionStorage.getItem('careerAnalysis');
-    if (stored) {
-      try {
-        setData(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse analysis data');
-      }
-    } else if (analysis) {
+    // Prioritize global AnalysisContext Single Source of Truth
+    if (analysis) {
       setData(analysis);
+    } else {
+      const stored = sessionStorage.getItem('careerAnalysis');
+      if (stored) {
+        try {
+          setData(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse analysis data');
+        }
+      }
     }
     setLoading(false);
 
@@ -79,6 +81,7 @@ const CareerReport = () => {
       .then(res => { if (res.data.success) setHistory(res.data.data || []); })
       .catch(() => {});
   }, [analysis]);
+
 
   const handleNewAnalysis = () => {
     sessionStorage.removeItem('careerAnalysis');
