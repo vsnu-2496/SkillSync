@@ -20,6 +20,7 @@ const MockInterview = lazy(() => import('./pages/MockInterview'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const CareerReport = lazy(() => import('./pages/CareerReport'));
+const AnalysisHistory = lazy(() => import('./pages/AnalysisHistory'));
 
 // Global Loading State
 const LoadingFallback = () => (
@@ -63,6 +64,9 @@ function App() {
             
             {/* Career Readiness Report */}
             <Route path="/career-report" element={<PrivateRoute><CareerReport /></PrivateRoute>} />
+
+            {/* Analysis History */}
+            <Route path="/history" element={<PrivateRoute><AnalysisHistory /></PrivateRoute>} />
             
             {/* Admin Dashboard */}
             <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />

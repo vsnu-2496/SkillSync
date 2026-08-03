@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Activity, 
   Target, 
@@ -18,7 +18,10 @@ import {
   ShieldAlert,
   Cpu,
   Star,
-  Award
+  Award,
+  History,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -70,6 +73,8 @@ const Dashboard = () => {
   const [gaps, setGaps] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [latestAnalysis, setLatestAnalysis] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -119,6 +124,15 @@ const Dashboard = () => {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Fetch latest analysis for the dashboard widget
+    api.get('/resume/history?page=1&limit=1&sort=newest')
+      .then(res => {
+        if (res.data.success && res.data.data.length > 0) {
+          setLatestAnalysis(res.data.data[0]);
+        }
+      })
+      .catch(() => {}); // non-critical, don't block dashboard
   }, []);
 
   if (loading) {
@@ -141,12 +155,73 @@ const Dashboard = () => {
       />
 
       {/* ── UNIFIED STATS GRID ── */}
-      <div className="stats-grid" style={{ marginBottom: '3rem' }}>
+      <div className="stats-grid" style={{ marginBottom: latestAnalysis ? '1.5rem' : '3rem' }}>
         <StatCard icon={<TrendingUp size={24} />} value={`${stats.match_score}%`} label="Career Synergy" trend="+5.2%" color="var(--primary)" />
         <StatCard icon={<Trophy size={24} />} value={`${stats.prep_readiness}%`} label="Prep Readiness" trend="Resume + Test" color="#f59e0b" />
         <StatCard icon={<Activity size={24} />} value={stats.gaps_found} label="Critical Deficits" trend="Action Required" color="#f43f5e" />
         <StatCard icon={<Building2 size={24} />} value={stats.career_options} label="Target Entities" trend="Hiring" color="#10b981" />
       </div>
+
+      {/* ── LATEST ANALYSIS WIDGET ── */}
+      {latestAnalysis && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.04))',
+          border: '1px solid rgba(99,102,241,0.18)', borderRadius: '20px',
+          padding: '1.25rem 1.5rem', marginBottom: '2rem',
+          display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap'
+        }}>
+          {/* Icon */}
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg,#6366f1,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <History size={22} color="white" />
+          </div>
+
+          {/* Label */}
+          <div style={{ minWidth: '140px' }}>
+            <p style={{ fontSize: '0.6rem', color: '#6366f1', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }}>Latest Analysis</p>
+            <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{latestAnalysis.jobRole}</p>
+            <p style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600 }}>@ {latestAnalysis.company}</p>
+          </div>
+
+          {/* Scores */}
+          <div style={{ display: 'flex', gap: '1.25rem', flex: 1, flexWrap: 'wrap' }}>
+            {[
+              { label: 'ATS', value: latestAnalysis.atsScore, color: '#10b981' },
+              { label: 'Readiness', value: latestAnalysis.careerReadiness, color: '#6366f1' },
+              { label: 'Keywords', value: latestAnalysis.keywordMatch, color: '#a855f7' },
+              { label: 'Projected', value: latestAnalysis.estimatedScoreAfterImprovements, color: '#f59e0b' },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{ textAlign: 'center', minWidth: '52px' }}>
+                <p style={{ fontSize: '1.3rem', fontWeight: 900, color, lineHeight: 1 }}>{value ?? 0}%</p>
+                <p style={{ fontSize: '0.58rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
+            <button
+              onClick={() => {
+                api.get(`/resume/history/${latestAnalysis._id}`).then(res => {
+                  if (res.data.success) {
+                    const d = res.data.data;
+                    sessionStorage.setItem('careerAnalysis', JSON.stringify({ ...d, analysisId: d._id, fromHistory: true }));
+                    navigate('/career-report');
+                  }
+                });
+              }}
+              style={{ padding: '0.55rem 1rem', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#6366f1,#a855f7)', color: 'white', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
+              <Eye size={13} /> View Report
+            </button>
+            <button
+              onClick={() => navigate('/history')}
+              style={{ padding: '0.55rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.2)', background: 'rgba(99,102,241,0.06)', color: '#818cf8', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
+              <History size={13} /> All History
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="main-grid">
         {/* ── LEFT: CAREER MAPPING & INTERVIEW WORKFLOW ── */}

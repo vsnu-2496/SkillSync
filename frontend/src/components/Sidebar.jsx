@@ -16,16 +16,18 @@ import {
   Workflow,
   Cpu,
   ShieldPlus,
-  Brain
+  Brain,
+  History
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const INTELLIGENCE_ITEMS = [
-  { name: 'Dashboard',     icon: LayoutDashboard, path: '/dashboard' },
-  { name: 'Neural Analysis', icon: FileText,         path: '/resume' },
-  { name: 'Career Mapping',  icon: Briefcase,        path: '/careers' },
-  { name: 'Skill Matrix',    icon: Target,           path: '/skill-gap' },
-  { name: 'System Logic',    icon: Cpu,              path: '/how-it-works' },
+  { name: 'Dashboard',          icon: LayoutDashboard, path: '/dashboard' },
+  { name: 'Neural Analysis',    icon: FileText,         path: '/resume' },
+  { name: 'Analysis History',   icon: History,          path: '/history' },
+  { name: 'Career Mapping',     icon: Briefcase,        path: '/careers' },
+  { name: 'Skill Matrix',       icon: Target,           path: '/skill-gap' },
+  { name: 'System Logic',       icon: Cpu,              path: '/how-it-works' },
 ];
 
 const EXECUTION_ITEMS = [

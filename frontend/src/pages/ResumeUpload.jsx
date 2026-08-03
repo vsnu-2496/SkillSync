@@ -46,6 +46,28 @@ const ResumeUpload = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
 
+  // ─── Re-analyze pre-fill ─────────────────────────────────────────────
+  // When arriving from AnalysisHistory "Re-analyze" button, sessionStorage
+  // contains { company, jobRole, force: true }. Pre-fill and set force flag.
+  const [forceReanalyze, setForceReanalyze] = useState(false);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('reanalyze');
+    if (stored) {
+      try {
+        const { company, jobRole, force } = JSON.parse(stored);
+        sessionStorage.removeItem('reanalyze'); // consume once
+        if (company) setSelectedCompany(company);
+        if (force)   setForceReanalyze(true);
+        // Role is set after companies load — handled in the companies useEffect below
+        if (jobRole) {
+          // Store temporarily; applied once companies are loaded
+          sessionStorage.setItem('_pendingRole', jobRole);
+        }
+      } catch (e) { /* ignore parse errors */ }
+    }
+  }, []);
+
   // Fetch companies on mount
   useEffect(() => {
     setLoadingCompanies(true);
@@ -57,12 +79,20 @@ const ResumeUpload = () => {
       .finally(() => setLoadingCompanies(false));
   }, []);
 
-  // Update roles when company changes
+  // Update roles when company changes; also apply pending role from re-analyze
   useEffect(() => {
     if (selectedCompany) {
       const found = companies.find(c => c.name === selectedCompany);
       setAvailableRoles(found?.roles || []);
       setSelectedRole('');
+
+      // Apply pending role (set by re-analyze flow)
+      const pendingRole = sessionStorage.getItem('_pendingRole');
+      if (pendingRole) {
+        sessionStorage.removeItem('_pendingRole');
+        const roles = found?.roles || [];
+        if (roles.includes(pendingRole)) setSelectedRole(pendingRole);
+      }
     }
   }, [selectedCompany, companies]);
 
@@ -121,7 +151,12 @@ const ResumeUpload = () => {
       fd.append('company', selectedCompany);
       fd.append('jobRole', selectedRole);
 
-      const response = await api.post('/resume/analyze-career', fd, {
+      // ?force=true bypasses the fingerprint cache and forces fresh Gemini analysis
+      const url = forceReanalyze
+        ? '/resume/analyze-career?force=true'
+        : '/resume/analyze-career';
+
+      const response = await api.post(url, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 180000 // 180s — AI analysis can take up to 2 mins for large resumes
       });
@@ -130,9 +165,14 @@ const ResumeUpload = () => {
 
       if (response.data.success) {
         await refreshUser();
+        setForceReanalyze(false); // reset after use
         setStep(4);
         // Store result in sessionStorage and navigate to report page
-        sessionStorage.setItem('careerAnalysis', JSON.stringify(response.data.data));
+        const reportData = {
+          ...response.data.data,
+          fromCache: response.data.fromCache
+        };
+        sessionStorage.setItem('careerAnalysis', JSON.stringify(reportData));
         setTimeout(() => navigate('/career-report'), 1200);
       } else {
         throw new Error(response.data.message || 'Analysis failed');
