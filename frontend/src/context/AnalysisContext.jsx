@@ -3,13 +3,9 @@
  * ─────────────────────────────────────────────────────────────────────
  * Single Source of Truth for the user's latest career analysis.
  *
- * Fetches once from GET /api/resume/latest on mount.
- * All pages (Dashboard, Career Mapping, Skill Matrix, Company Explorer)
+ * Automatically fetches from GET /api/resume/latest on mount / login / refresh.
+ * All pages (Dashboard, Career Recommendations, Company Explorer, Interview Prep)
  * read from this context — zero duplicate API calls.
- *
- * Usage:
- *   import { useAnalysis } from '../context/AnalysisContext';
- *   const { analysis, loading, hasAnalysis, refresh } = useAnalysis();
  */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/axiosConfig';
@@ -25,32 +21,41 @@ export const AnalysisProvider = ({ children }) => {
   const [hasAnalysis, setHasAnalysis] = useState(false);
 
   const fetchLatest = useCallback(async () => {
-    if (!user) { setLoading(false); return; }
+    if (!user) {
+      setAnalysis(null);
+      setHasAnalysis(false);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await api.get('/resume/latest');
-      if (res.data.success) {
-        setAnalysis(res.data.data);
-        setHasAnalysis(res.data.hasAnalysis);
+      const payload = res.data?.analysis || res.data?.data;
+      if (res.data?.success && payload) {
+        setAnalysis(payload);
+        setHasAnalysis(true);
+      } else {
+        setAnalysis(null);
+        setHasAnalysis(false);
       }
     } catch (err) {
-      // Non-blocking: pages degrade gracefully when no analysis exists
+      console.error('[AnalysisContext] Error loading latest analysis:', err);
+      setAnalysis(null);
+      setHasAnalysis(false);
       setError(err?.response?.data?.error || 'Could not load analysis.');
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  // Fetch on login; re-fetch when user changes
+  // Fetch on login or mount; re-fetch when user object changes
   useEffect(() => {
     fetchLatest();
   }, [fetchLatest]);
 
-  // Call this after a new analysis is completed to sync all pages immediately
-  const refresh = useCallback(() => fetchLatest(), [fetchLatest]);
+  const refreshAnalysis = useCallback(() => fetchLatest(), [fetchLatest]);
 
-  // Call this on logout to clear stale data
   const clearAnalysis = useCallback(() => {
     setAnalysis(null);
     setHasAnalysis(false);
@@ -58,7 +63,15 @@ export const AnalysisProvider = ({ children }) => {
   }, []);
 
   return (
-    <AnalysisContext.Provider value={{ analysis, loading, error, hasAnalysis, refresh, clearAnalysis }}>
+    <AnalysisContext.Provider value={{
+      analysis,
+      loading,
+      error,
+      hasAnalysis,
+      refresh: refreshAnalysis,
+      refreshAnalysis,
+      clearAnalysis
+    }}>
       {children}
     </AnalysisContext.Provider>
   );

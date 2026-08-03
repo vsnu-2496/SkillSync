@@ -675,52 +675,56 @@ exports.getLatestAnalysis = async (req, res) => {
       }
     }
 
+    const analysisPayload = {
+      analysisId:    analysis._id,
+      company:       analysis.company,
+      jobRole:       analysis.jobRole,
+      resumeFilename: analysis.resumeFilename,
+      createdAt:     analysis.createdAt,
+      fromCache:     analysis.fromCache,
+      jdSource:      analysis.jobDescriptionSource,
+      // Core scores & Evidence-Based Career Recommendations
+      bestCareerRole:            bestRole,
+      bestCareerMatchPercentage: bestMatch,
+      rankedCareerRoles:         rankedRoles,
+      atsScore:                  analysis.atsScore,
+      careerReadiness:           analysis.careerReadiness,
+      keywordMatch:              analysis.keywordMatch,
+      estimatedScoreAfterImprovements: analysis.estimatedScoreAfterImprovements,
+      // Sub-scores
+      interestScore:       analysis.interestScore,
+      projectScore:        analysis.projectScore,
+      internshipScore:     analysis.internshipScore,
+      certificationScore:  analysis.certificationScore,
+      // Skills
+      matchedSkills:   analysis.matchedSkills,
+      missingSkills:   analysis.missingSkills,
+      extractedSkills: analysis.extractedSkills,
+      // Explainability
+      strengths:       analysis.strengths,
+      weaknesses:      analysis.weaknesses,
+      whyThisScore:    analysis.whyThisScore,
+      interestExplanation:      analysis.interestExplanation,
+      projectExplanation:       analysis.projectExplanation,
+      internshipExplanation:    analysis.internshipExplanation,
+      certificationExplanation: analysis.certificationExplanation,
+      // Recommendations & roadmap
+      recommendations: analysis.recommendations,
+      roadmap:         analysis.roadmap
+    };
+
     return res.status(200).json({
       success: true,
       hasAnalysis: true,
-      data: {
-        analysisId:    analysis._id,
-        company:       analysis.company,
-        jobRole:       analysis.jobRole,
-        resumeFilename: analysis.resumeFilename,
-        createdAt:     analysis.createdAt,
-        fromCache:     analysis.fromCache,
-        jdSource:      analysis.jobDescriptionSource,
-        // Core scores & Career Recommendations
-        bestCareerRole:            bestRole,
-        bestCareerMatchPercentage: bestMatch,
-        rankedCareerRoles:         rankedRoles,
-        atsScore:                  analysis.atsScore,
-        careerReadiness:           analysis.careerReadiness,
-        keywordMatch:              analysis.keywordMatch,
-        estimatedScoreAfterImprovements: analysis.estimatedScoreAfterImprovements,
-        // Sub-scores
-        interestScore:       analysis.interestScore,
-        projectScore:        analysis.projectScore,
-        internshipScore:     analysis.internshipScore,
-        certificationScore:  analysis.certificationScore,
-        // Skills
-        matchedSkills:   analysis.matchedSkills,
-        missingSkills:   analysis.missingSkills,
-        extractedSkills: analysis.extractedSkills,
-        // Explainability
-        strengths:       analysis.strengths,
-        weaknesses:      analysis.weaknesses,
-        whyThisScore:    analysis.whyThisScore,
-        interestExplanation:      analysis.interestExplanation,
-        projectExplanation:       analysis.projectExplanation,
-        internshipExplanation:    analysis.internshipExplanation,
-        certificationExplanation: analysis.certificationExplanation,
-        // Recommendations & roadmap
-        recommendations: analysis.recommendations,
-        roadmap:         analysis.roadmap
-      }
+      analysis: analysisPayload,
+      data: analysisPayload
     });
 
   } catch (error) {
     return res.status(500).json({ success: false, error: 'Failed to retrieve latest analysis.' });
   }
 };
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // EXISTING: Legacy handlers — UNCHANGED

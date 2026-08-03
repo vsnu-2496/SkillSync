@@ -27,6 +27,7 @@ import {
   PolarRadiusAxis, Radar
 } from 'recharts';
 import api from '../api/axiosConfig';
+import { useAnalysis } from '../context/AnalysisContext';
 import PageHeader from '../components/layout/PageHeader';
 import {
   GlassCard, Badge, Button, CircularProgress,
@@ -57,8 +58,10 @@ const CareerReport = () => {
   const [activeRecTab, setActiveRecTab] = useState('projects');
   const navigate = useNavigate();
 
+  const { analysis, loading: contextLoading } = useAnalysis();
+
   useEffect(() => {
-    // Load from sessionStorage (set by ResumeUpload after analysis)
+    // Load from sessionStorage if present (e.g. fresh navigation), else fallback to global AnalysisContext
     const stored = sessionStorage.getItem('careerAnalysis');
     if (stored) {
       try {
@@ -66,6 +69,8 @@ const CareerReport = () => {
       } catch (e) {
         console.error('Failed to parse analysis data');
       }
+    } else if (analysis) {
+      setData(analysis);
     }
     setLoading(false);
 
@@ -73,7 +78,7 @@ const CareerReport = () => {
     api.get('/resume/history')
       .then(res => { if (res.data.success) setHistory(res.data.data || []); })
       .catch(() => {});
-  }, []);
+  }, [analysis]);
 
   const handleNewAnalysis = () => {
     sessionStorage.removeItem('careerAnalysis');
@@ -96,8 +101,11 @@ const CareerReport = () => {
     );
   }
 
+  const activeData = data || analysis;
+
   // ── No Data State ──────────────────────────────────────────────────
-  if (!data) {
+  if (!activeData) {
+
     return (
       <div className="animate-fade-up" style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center', padding: '4rem 2rem' }}>
         <GlassCard hover={false}>
@@ -118,18 +126,24 @@ const CareerReport = () => {
     );
   }
 
-  const tierColor = data.readinessColor || getTierColor(data.careerReadiness);
-  const tierLabel = data.readinessTier || 'Analyzed';
+  const report = activeData;
+  const companyName  = report.company || 'Target Company';
+  const roleName     = report.jobRole || 'Target Role';
+  const score        = report.careerReadiness || 0;
+  const atsScore     = report.atsScore || 0;
+  const keywordMatch = report.keywordMatch || 0;
+  const tierColor    = getTierColor(score);
+  const tierLabel = report.readinessTier || 'Analyzed';
 
-  // ── Radar chart data from sub-scores ──────────────────────────────
   const radarData = [
-    { subject: 'Interest', A: Math.round((data.interestScore / 25) * 100) },
-    { subject: 'Projects', A: Math.round((data.projectScore / 25) * 100) },
-    { subject: 'Internship', A: Math.round((data.internshipScore / 25) * 100) },
-    { subject: 'Certs', A: Math.round((data.certificationScore / 25) * 100) },
-    { subject: 'Keywords', A: data.keywordMatch || 0 },
-    { subject: 'ATS', A: data.atsScore || 0 },
+    { subject: 'Interest', A: Math.round(((report.interestScore || 15) / 25) * 100) },
+    { subject: 'Projects', A: Math.round(((report.projectScore || 15) / 25) * 100) },
+    { subject: 'Internships', A: Math.round(((report.internshipScore || 15) / 25) * 100) },
+    { subject: 'Certs', A: Math.round(((report.certificationScore || 15) / 25) * 100) },
+    { subject: 'Keywords', A: keywordMatch },
+    { subject: 'ATS Score', A: atsScore },
   ];
+
 
   return (
     <div className="animate-fade-up" style={{ maxWidth: '1000px', margin: '0 auto' }}>
