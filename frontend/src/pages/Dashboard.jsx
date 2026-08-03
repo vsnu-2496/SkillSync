@@ -22,6 +22,8 @@ const Dashboard = () => {
   const { analysis, loading, hasAnalysis } = useAnalysis();
   const navigate = useNavigate();
 
+  console.log('[Dashboard Render] loading:', loading, 'hasAnalysis:', hasAnalysis, 'hasAnalysisObject:', Boolean(analysis), 'Role:', analysis?.bestCareerRole || analysis?.jobRole);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '1rem' }}>
@@ -98,8 +100,9 @@ const Dashboard = () => {
         </div>
       </GlassCard>
 
-      {hasAnalysis && analysis ? (
+      {(hasAnalysis || Boolean(analysis)) ? (
         <>
+
           {/* ── WEAK TARGET ROLE ALERT BANNER (If Selected Role != Best Recommended Role) ── */}
           {isSelectedRoleWeak && (
             <div style={{

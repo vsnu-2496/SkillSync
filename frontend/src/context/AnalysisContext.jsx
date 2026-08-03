@@ -22,6 +22,7 @@ export const AnalysisProvider = ({ children }) => {
 
   const fetchLatest = useCallback(async () => {
     if (!user) {
+      console.log('[AnalysisContext] No authenticated user. Clearing analysis context.');
       setAnalysis(null);
       setHasAnalysis(false);
       setLoading(false);
@@ -30,17 +31,22 @@ export const AnalysisProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
+      console.log('[AnalysisContext] Fetching latest analysis from GET /api/resume/latest...');
       const res = await api.get('/resume/latest');
+      console.log('[AnalysisContext] GET /api/resume/latest response success:', res.data?.success, 'hasAnalysis:', res.data?.hasAnalysis);
+      
       const payload = res.data?.analysis || res.data?.data;
-      if (res.data?.success && payload) {
+      if (res.data?.success && payload && res.data.hasAnalysis !== false) {
+        console.log('[AnalysisContext] ✅ Active analysis loaded successfully:', payload.analysisId || payload._id, 'Role:', payload.bestCareerRole || payload.jobRole);
         setAnalysis(payload);
         setHasAnalysis(true);
       } else {
+        console.warn('[AnalysisContext] ⚠️ No completed analysis document found in MongoDB for user.');
         setAnalysis(null);
         setHasAnalysis(false);
       }
     } catch (err) {
-      console.error('[AnalysisContext] Error loading latest analysis:', err);
+      console.error('[AnalysisContext] ❌ Error fetching latest analysis:', err);
       setAnalysis(null);
       setHasAnalysis(false);
       setError(err?.response?.data?.error || 'Could not load analysis.');
@@ -54,9 +60,13 @@ export const AnalysisProvider = ({ children }) => {
     fetchLatest();
   }, [fetchLatest]);
 
-  const refreshAnalysis = useCallback(() => fetchLatest(), [fetchLatest]);
+  const refreshAnalysis = useCallback(() => {
+    console.log('[AnalysisContext] Triggering explicit refresh of latest analysis...');
+    return fetchLatest();
+  }, [fetchLatest]);
 
   const clearAnalysis = useCallback(() => {
+    console.log('[AnalysisContext] Clearing analysis context state.');
     setAnalysis(null);
     setHasAnalysis(false);
     setError(null);

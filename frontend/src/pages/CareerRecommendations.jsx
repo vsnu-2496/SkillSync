@@ -25,6 +25,8 @@ import { GlassCard, Button, Badge } from '../components/ui';
 const CareerRecommendations = () => {
   const { analysis, loading, hasAnalysis } = useAnalysis();
 
+  console.log('[CareerRecommendations Render] loading:', loading, 'hasAnalysis:', hasAnalysis, 'hasAnalysisObject:', Boolean(analysis), 'Role:', analysis?.bestCareerRole || analysis?.jobRole);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '1rem' }}>
@@ -35,7 +37,9 @@ const CareerRecommendations = () => {
     );
   }
 
-  if (!hasAnalysis || !analysis) {
+  if (!hasAnalysis && !analysis) {
+
+
     return (
       <div className="animate-fade-up">
         <PageHeader

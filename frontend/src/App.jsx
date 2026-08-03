@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AnalysisProvider } from './context/AnalysisContext';
 import AppLayout from './components/layout/AppLayout';
@@ -30,12 +30,19 @@ const LoadingFallback = () => (
   </div>
 );
 
-const PrivateRoute = ({ children }) => {
+// Single Persistent Protected Layout
+// Mounts AnalysisProvider & AppLayout ONCE per session so state is shared across all pages
+const ProtectedLayout = () => {
   const { user, loading } = useAuth();
   if (loading) return <LoadingFallback />;
-  return user
-    ? <AnalysisProvider><AppLayout>{children}</AppLayout></AnalysisProvider>
-    : <Navigate to="/login" />;
+  if (!user) return <Navigate to="/login" replace />;
+  return (
+    <AnalysisProvider>
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
+    </AnalysisProvider>
+  );
 };
 
 function App() {
@@ -45,36 +52,30 @@ function App() {
         <NotificationManager />
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            {/* Auth Routes */}
+            {/* Public Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             
-            {/* Protected Portal Routes (SkillSync Career Intelligence Platform) */}
-            <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/resume" element={<PrivateRoute><ResumeUpload /></PrivateRoute>} />
-            <Route path="/careers" element={<PrivateRoute><CareerRecommendations /></PrivateRoute>} />
-            
-            {/* Execution Modules */}
-            <Route path="/companies" element={<PrivateRoute><CompanyExplorer /></PrivateRoute>} />
-            <Route path="/interview-prep" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
-            <Route path="/mock-interview" element={<PrivateRoute><MockInterview /></PrivateRoute>} />
-            <Route path="/interview-vault" element={<PrivateRoute><InterviewVault /></PrivateRoute>} />
-            <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
-            <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
-            
-            {/* Career Readiness Report */}
-            <Route path="/career-report" element={<PrivateRoute><CareerReport /></PrivateRoute>} />
-
-            {/* Analysis History */}
-            <Route path="/history" element={<PrivateRoute><AnalysisHistory /></PrivateRoute>} />
-            
-            {/* Admin Dashboard */}
-            <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+            {/* Protected Portal Routes (Single Source of Truth Architecture) */}
+            <Route element={<ProtectedLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/resume" element={<ResumeUpload />} />
+              <Route path="/careers" element={<CareerRecommendations />} />
+              <Route path="/companies" element={<CompanyExplorer />} />
+              <Route path="/interview-prep" element={<InterviewPrep />} />
+              <Route path="/mock-interview" element={<MockInterview />} />
+              <Route path="/interview-vault" element={<InterviewVault />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/career-report" element={<CareerReport />} />
+              <Route path="/history" element={<AnalysisHistory />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
             
             {/* Redirects */}
-            <Route path="/" element={<Navigate to="/dashboard" />} />
-            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>
       </AuthProvider>
