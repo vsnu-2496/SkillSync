@@ -579,14 +579,30 @@ const CompanyExplorer = () => {
 
                   {/* Match Banner if User analyzed this company & role */}
                   {selectedRole.matchData && (
-                    <div style={{ padding: '1rem', borderRadius: '12px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>Analysis Match Available</p>
-                        <p style={{ fontSize: '0.85rem', color: 'white', fontWeight: 700 }}>Career Readiness: {selectedRole.matchData.careerReadiness}% | ATS Score: {selectedRole.matchData.atsScore}%</p>
+                    <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Candidate Resume Alignment</span>
+                          <p style={{ fontSize: '1rem', color: 'white', fontWeight: 900, marginTop: '2px' }}>
+                            Readiness: {selectedRole.matchData.careerReadiness}% | ATS Score: {selectedRole.matchData.atsScore}%
+                          </p>
+                        </div>
+                        <Badge variant={selectedRole.matchData.careerReadiness >= 70 ? 'success' : 'warning'}>
+                          {selectedRole.matchData.careerReadiness >= 70 ? 'Suitable Role' : 'Needs Improvement'}
+                        </Badge>
                       </div>
-                      <Link to="/career-report" style={{ textDecoration: 'none' }}>
-                        <Button variant="ghost" size="sm">Full Report</Button>
-                      </Link>
+
+                      {/* Matched vs Missing Skills */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div>
+                          <p style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: 800 }}>Matched Skills ({selectedRole.matchData.matchedSkills?.length || 0})</p>
+                          <p style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>{(selectedRole.matchData.matchedSkills || []).join(', ') || 'None'}</p>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '0.65rem', color: '#f43f5e', fontWeight: 800 }}>Missing Skills ({selectedRole.matchData.missingSkills?.length || 0})</p>
+                          <p style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>{(selectedRole.matchData.missingSkills || []).join(', ') || 'None'}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
 

@@ -22,7 +22,7 @@ const INTELLIGENCE_ITEMS = [
   { name: 'Dashboard',          icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Neural Analysis',    icon: FileText,        path: '/resume' },
   { name: 'Analysis History',   icon: History,         path: '/history' },
-  { name: 'Career Mapping',     icon: Briefcase,       path: '/careers' },
+  { name: 'Career Recommendation', icon: Briefcase,     path: '/careers' },
 ];
 
 const EXECUTION_ITEMS = [

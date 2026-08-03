@@ -408,6 +408,39 @@ const SettingsPage = () => {
                 </div>
               </div>
             </GlassCard>
+
+            {/* Resume & Analysis Management */}
+            <GlassCard>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText size={20} color="#10b981" /> Resume & Analysis Management
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500, marginBottom: '1.5rem' }}>Manage your active resume analysis vector and stored history records.</p>
+
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => window.location.href = '/history'}
+                  style={{
+                    padding: '0.75rem 1.25rem', borderRadius: '12px', background: 'rgba(99,102,241,0.08)',
+                    border: '1px solid rgba(99,102,241,0.2)', color: '#818cf8', fontWeight: 700,
+                    fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                  }}
+                >
+                  <History size={16} /> Manage Saved History
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.location.href = '/resume'}
+                  style={{
+                    padding: '0.75rem 1.25rem', borderRadius: '12px', background: 'rgba(16,185,129,0.08)',
+                    border: '1px solid rgba(16,185,129,0.2)', color: '#10b981', fontWeight: 700,
+                    fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
+                  }}
+                >
+                  <Zap size={16} /> Analyze New Resume
+                </button>
+              </div>
+            </GlassCard>
           </div>
 
           {/* Right Column: Avatar & System Preferences */}

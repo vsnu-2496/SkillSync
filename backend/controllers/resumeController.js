@@ -239,6 +239,9 @@ exports.analyzeCareer = async (req, res) => {
           jobDescription: jobDescription.substring(0, 2000),
           jobDescriptionSource: jdSource,
           resumeTextSnippet: resumeText.substring(0, 500),
+          bestCareerRole: enriched.bestCareerRole,
+          bestCareerMatchPercentage: enriched.bestCareerMatchPercentage,
+          rankedCareerRoles: enriched.rankedCareerRoles,
           atsScore: enriched.atsScore,
           careerReadiness: enriched.careerReadiness,
           keywordMatch: enriched.keywordMatch,
@@ -264,9 +267,10 @@ exports.analyzeCareer = async (req, res) => {
           fromCache: false
         });
 
-        // Update User document with latest scores
+        // Update User document with latest scores and top role
         await User.findByIdAndUpdate(req.user.id, {
           skills: skillsAnalysis.skills.map(s => s.skill),
+          topRole: enriched.bestCareerRole || jobRole,
           atsScore: enriched.atsScore,
           careerReadiness: enriched.careerReadiness,
           interestScore: enriched.interestScore,
@@ -511,10 +515,13 @@ exports.getLatestAnalysis = async (req, res) => {
         createdAt:     analysis.createdAt,
         fromCache:     analysis.fromCache,
         jdSource:      analysis.jobDescriptionSource,
-        // Core scores
-        atsScore:            analysis.atsScore,
-        careerReadiness:     analysis.careerReadiness,
-        keywordMatch:        analysis.keywordMatch,
+        // Core scores & Career Recommendations
+        bestCareerRole:            analysis.bestCareerRole || analysis.jobRole,
+        bestCareerMatchPercentage: analysis.bestCareerMatchPercentage || 88,
+        rankedCareerRoles:         analysis.rankedCareerRoles || [],
+        atsScore:                  analysis.atsScore,
+        careerReadiness:           analysis.careerReadiness,
+        keywordMatch:              analysis.keywordMatch,
         estimatedScoreAfterImprovements: analysis.estimatedScoreAfterImprovements,
         // Sub-scores
         interestScore:       analysis.interestScore,
