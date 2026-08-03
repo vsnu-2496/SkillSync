@@ -484,9 +484,69 @@ exports.deleteAnalysis = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/resume/latest
+ * Returns the most recent complete analysis for the authenticated user.
+ * This is the Single Source of Truth consumed by AnalysisContext on every page.
+ */
+exports.getLatestAnalysis = async (req, res) => {
+  try {
+    const analysis = await ResumeAnalysis.findOne({
+      userId: req.user.id,
+      analysisStatus: 'completed'
+    }).sort({ createdAt: -1 });
+
+    if (!analysis) {
+      return res.status(200).json({ success: true, data: null, hasAnalysis: false });
+    }
+
+    return res.status(200).json({
+      success: true,
+      hasAnalysis: true,
+      data: {
+        analysisId:    analysis._id,
+        company:       analysis.company,
+        jobRole:       analysis.jobRole,
+        resumeFilename: analysis.resumeFilename,
+        createdAt:     analysis.createdAt,
+        fromCache:     analysis.fromCache,
+        jdSource:      analysis.jobDescriptionSource,
+        // Core scores
+        atsScore:            analysis.atsScore,
+        careerReadiness:     analysis.careerReadiness,
+        keywordMatch:        analysis.keywordMatch,
+        estimatedScoreAfterImprovements: analysis.estimatedScoreAfterImprovements,
+        // Sub-scores
+        interestScore:       analysis.interestScore,
+        projectScore:        analysis.projectScore,
+        internshipScore:     analysis.internshipScore,
+        certificationScore:  analysis.certificationScore,
+        // Skills
+        matchedSkills:   analysis.matchedSkills,
+        missingSkills:   analysis.missingSkills,
+        extractedSkills: analysis.extractedSkills,
+        // Explainability
+        strengths:       analysis.strengths,
+        weaknesses:      analysis.weaknesses,
+        whyThisScore:    analysis.whyThisScore,
+        interestExplanation:      analysis.interestExplanation,
+        projectExplanation:       analysis.projectExplanation,
+        internshipExplanation:    analysis.internshipExplanation,
+        certificationExplanation: analysis.certificationExplanation,
+        // Recommendations & roadmap
+        recommendations: analysis.recommendations,
+        roadmap:         analysis.roadmap
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to retrieve latest analysis.' });
+  }
+};
+
 // ═══════════════════════════════════════════════════════════════════════
 // EXISTING: Legacy handlers — UNCHANGED
 // ═══════════════════════════════════════════════════════════════════════
+
 
 /**
  * POST /api/resume/analyze

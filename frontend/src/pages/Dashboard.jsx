@@ -1,139 +1,53 @@
+/**
+ * Dashboard.jsx — Career Intelligence Platform
+ * ─────────────────────────────────────────────────────────────────────
+ * EXECUTIVE SUMMARY ONLY. No charts, no repeated report data.
+ *
+ * Shows:
+ *  1. Career Readiness % + ATS Score hero
+ *  2. Industry Ready badge
+ *  3. Target Company & Role
+ *  4. Top 5 Missing Skills
+ *  5. Quick Recommendations (3)
+ *  6. Continue / Analyze CTA
+ *  7. Platform navigation cards
+ */
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Activity, 
-  Target, 
-  Rocket, 
-  TrendingUp, 
-  ArrowRight,
-  Brain,
-  Zap,
-  Clock,
-  Briefcase,
-  MessagesSquare,
-  Building2,
-  Trophy,
-  CheckCircle2,
-  ShieldPlus,
-  ShieldAlert,
-  Cpu,
-  Star,
-  Award,
-  History,
-  Eye,
-  RefreshCw
+import {
+  Brain, Zap, Target, ArrowRight, Building2, FileText,
+  MessagesSquare, CheckCircle2, AlertCircle, TrendingUp,
+  History, Briefcase, ShieldCheck, BookOpen, RefreshCw,
+  ChevronRight, Award, Clock, Cpu
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  PolarRadiusAxis, 
-  Radar, 
-  BarChart, 
-  CartesianGrid, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  Legend, 
-  Bar, 
-  AreaChart, 
-  Area 
-} from 'recharts';
 import api from '../api/axiosConfig';
+import { useAnalysis } from '../context/AnalysisContext';
 import PageHeader from '../components/layout/PageHeader';
-import { GlassCard, Button, Badge, ProgressBar, ScoreBar } from '../components/ui';
+import { GlassCard, Button, Badge } from '../components/ui';
+
+// ─── Tier helper ─────────────────────────────────────────────────────
+const getTier = (score) => {
+  if (score >= 80) return { label: 'Industry Ready',  color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.2)'  };
+  if (score >= 65) return { label: 'On Track',        color: '#6366f1', bg: 'rgba(99,102,241,0.1)',  border: 'rgba(99,102,241,0.2)'  };
+  if (score >= 50) return { label: 'Developing',      color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.2)'  };
+  return           { label: 'Early Stage',            color: '#f43f5e', bg: 'rgba(244,63,94,0.08)',  border: 'rgba(244,63,94,0.15)'  };
+};
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({ 
-    match_score: 0, 
-    gaps_found: 0, 
-    career_options: 0, 
-    prep_readiness: 64, 
-    performance_score: 0,
-    ats_score: 0,
-    tech_score: 0,
-    profile_completeness: 0,
-    resume_quality: 'Average',
-    projects_count: 0,
-    internships_count: 0,
-    career_readiness: 0,
-    interest_score: 0,
-    project_score: 0,
-    internship_score: 0,
-    certification_score: 0,
-    keyword_match: 0,
-    target_company: '',
-    target_role: '',
-    analysis_count: 0
-  });
-  const [bestMatch, setBestMatch] = useState({ domain: "Web Development", confidence_score: 92 });
-  const [recentVault, setRecentVault] = useState([]);
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [gaps, setGaps] = useState([]);
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [latestAnalysis, setLatestAnalysis] = useState(null);
+  const { analysis, loading: analysisLoading, hasAnalysis, refresh } = useAnalysis();
+  const [dashData,   setDashData]   = useState(null);
+  const [dashLoading, setDashLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Dashboard still calls its own lightweight API for activity/vault data
   useEffect(() => {
-    setLoading(true);
     api.get('/dashboard')
-      .then((res) => {
-        if (res.data.success) {
-          const dash = res.data.data;
-          setStats({
-            match_score: dash.metrics.careerSynergy,
-            gaps_found: dash.metrics.criticalDeficits,
-            career_options: dash.metrics.targetCompanies,
-            prep_readiness: dash.metrics.prepReadiness,
-            performance_score: dash.metrics.performanceScore,
-            ats_score: dash.metrics.atsScore || 0,
-            tech_score: dash.metrics.techScore || 0,
-            profile_completeness: dash.metrics.profileCompleteness || 0,
-            resume_quality: dash.metrics.resumeQuality || 'Average',
-            projects_count: dash.metrics.projectsCount || 0,
-            internships_count: dash.metrics.internshipsCount || 0,
-            career_readiness: dash.metrics.careerReadiness || 0,
-            interest_score: dash.metrics.interestScore || 0,
-            project_score: dash.metrics.projectScore || 0,
-            internship_score: dash.metrics.internshipScore || 0,
-            certification_score: dash.metrics.certificationScore || 0,
-            keyword_match: dash.metrics.keywordMatch || 0,
-            target_company: dash.metrics.targetCompany || '',
-            target_role: dash.metrics.targetRole || '',
-            analysis_count: dash.metrics.analysisCount || 0
-          });
-          setBestMatch({
-            domain: dash.topRole,
-            confidence_score: dash.metrics.careerSynergy
-          });
-          setGaps(dash.skillGaps);
-          setCompanies(dash.companyMatches);
-          setRecentVault(dash.recentVault || []);
-          
-          // Map recent activity for the radar
-          const activity = dash.recentActivity.map((msg, index) => ({
-            time: index === 0 ? 'LIVE' : `${index * 2}h ago`,
-            title: index === 0 ? 'System Intelligence' : 'Status Update',
-            body: msg,
-            type: index === 0 ? 'primary' : 'success'
-          }));
-          setActivityLogs(activity); 
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-
-    // Fetch latest analysis for the dashboard widget
-    api.get('/resume/history?page=1&limit=1&sort=newest')
-      .then(res => {
-        if (res.data.success && res.data.data.length > 0) {
-          setLatestAnalysis(res.data.data[0]);
-        }
-      })
-      .catch(() => {}); // non-critical, don't block dashboard
+      .then(res => { if (res.data.success) setDashData(res.data.data); })
+      .catch(() => {})
+      .finally(() => setDashLoading(false));
   }, []);
+
+  const loading = analysisLoading || dashLoading;
 
   if (loading) {
     return (
@@ -145,381 +59,263 @@ const Dashboard = () => {
     );
   }
 
+  const tier = hasAnalysis && analysis ? getTier(analysis.careerReadiness || 0) : null;
+  const missingSkills = hasAnalysis && analysis ? (analysis.missingSkills || []).slice(0, 6) : [];
+  const quickRecs = hasAnalysis && analysis
+    ? [
+        ...(analysis.recommendations?.projects     || []).slice(0, 1).map(r => ({ type: 'Project',      item: r, color: '#6366f1' })),
+        ...(analysis.recommendations?.certifications || []).slice(0, 1).map(r => ({ type: 'Cert',       item: r, color: '#f59e0b' })),
+        ...(analysis.recommendations?.skills       || []).slice(0, 1).map(r => ({ type: 'Skill',        item: r, color: '#10b981' }))
+      ]
+    : [];
+
+  const handleViewReport = async () => {
+    if (!analysis) return;
+    sessionStorage.setItem('careerAnalysis', JSON.stringify({ ...analysis, analysisId: analysis.analysisId, fromHistory: true }));
+    navigate('/career-report');
+  };
+
   return (
     <div className="animate-fade-up">
       <PageHeader
         title="Career"
-        gradient="Suite"
-        subtitle="The unified neural dashboard for skill analysis, career intelligence, and professional interview preparation."
-        badge={<Badge variant="primary" icon={Zap}>SkillSync x EasyPrep Connected</Badge>}
+        gradient="Intelligence"
+        subtitle="Your AI-powered career readiness platform. One analysis, every insight."
+        badge={<Badge variant="primary" icon={Zap}>SkillSync AI Platform</Badge>}
       />
 
-      {/* ── UNIFIED STATS GRID ── */}
-      <div className="stats-grid" style={{ marginBottom: latestAnalysis ? '1.5rem' : '3rem' }}>
-        <StatCard icon={<TrendingUp size={24} />} value={`${stats.match_score}%`} label="Career Synergy" trend="+5.2%" color="var(--primary)" />
-        <StatCard icon={<Trophy size={24} />} value={`${stats.prep_readiness}%`} label="Prep Readiness" trend="Resume + Test" color="#f59e0b" />
-        <StatCard icon={<Activity size={24} />} value={stats.gaps_found} label="Critical Deficits" trend="Action Required" color="#f43f5e" />
-        <StatCard icon={<Building2 size={24} />} value={stats.career_options} label="Target Entities" trend="Hiring" color="#10b981" />
-      </div>
-
-      {/* ── LATEST ANALYSIS WIDGET ── */}
-      {latestAnalysis && (
+      {/* ── HERO: Career Readiness + ATS ── */}
+      {hasAnalysis && analysis ? (
         <div style={{
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.04))',
-          border: '1px solid rgba(99,102,241,0.18)', borderRadius: '20px',
-          padding: '1.25rem 1.5rem', marginBottom: '2rem',
-          display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap'
+          background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.05))',
+          border: '1px solid rgba(99,102,241,0.2)', borderRadius: '24px',
+          padding: '2rem', marginBottom: '2rem',
+          display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '2rem', alignItems: 'center'
         }}>
-          {/* Icon */}
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg,#6366f1,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <History size={22} color="white" />
-          </div>
-
-          {/* Label */}
-          <div style={{ minWidth: '140px' }}>
-            <p style={{ fontSize: '0.6rem', color: '#6366f1', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px' }}>Latest Analysis</p>
-            <p style={{ fontSize: '0.95rem', fontWeight: 800, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{latestAnalysis.jobRole}</p>
-            <p style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600 }}>@ {latestAnalysis.company}</p>
-          </div>
-
-          {/* Scores */}
-          <div style={{ display: 'flex', gap: '1.25rem', flex: 1, flexWrap: 'wrap' }}>
-            {[
-              { label: 'ATS', value: latestAnalysis.atsScore, color: '#10b981' },
-              { label: 'Readiness', value: latestAnalysis.careerReadiness, color: '#6366f1' },
-              { label: 'Keywords', value: latestAnalysis.keywordMatch, color: '#a855f7' },
-              { label: 'Projected', value: latestAnalysis.estimatedScoreAfterImprovements, color: '#f59e0b' },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ textAlign: 'center', minWidth: '52px' }}>
-                <p style={{ fontSize: '1.3rem', fontWeight: 900, color, lineHeight: 1 }}>{value ?? 0}%</p>
-                <p style={{ fontSize: '0.58rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>{label}</p>
+          {/* Left: Big score */}
+          <div style={{ textAlign: 'center', minWidth: '110px' }}>
+            <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="110" height="110" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="8" />
+                <circle cx="55" cy="55" r="46" fill="none"
+                  stroke={tier.color} strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 46}`}
+                  strokeDashoffset={`${2 * Math.PI * 46 * (1 - (analysis.careerReadiness || 0) / 100)}`}
+                  style={{ transition: 'stroke-dashoffset 1s ease' }}
+                />
+              </svg>
+              <div style={{ position: 'absolute', textAlign: 'center' }}>
+                <p style={{ fontSize: '1.6rem', fontWeight: 900, color: 'white', lineHeight: 1 }}>{analysis.careerReadiness || 0}%</p>
+                <p style={{ fontSize: '0.5rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Readiness</p>
               </div>
-            ))}
+            </div>
+            <div style={{ marginTop: '0.5rem', padding: '0.3rem 0.75rem', borderRadius: '20px', background: tier.bg, border: `1px solid ${tier.border}`, display: 'inline-block' }}>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: tier.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{tier.label}</span>
+            </div>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
-            <button
-              onClick={() => {
-                api.get(`/resume/history/${latestAnalysis._id}`).then(res => {
-                  if (res.data.success) {
-                    const d = res.data.data;
-                    sessionStorage.setItem('careerAnalysis', JSON.stringify({ ...d, analysisId: d._id, fromHistory: true }));
-                    navigate('/career-report');
-                  }
-                });
-              }}
-              style={{ padding: '0.55rem 1rem', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#6366f1,#a855f7)', color: 'white', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <Eye size={13} /> View Report
+          {/* Center: Company/Role + sub-scores */}
+          <div>
+            <p style={{ fontSize: '0.6rem', color: '#6366f1', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '4px' }}>Current Target</p>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: 'white', marginBottom: '2px' }}>{analysis.jobRole}</h3>
+            <p style={{ fontSize: '0.9rem', color: '#818cf8', fontWeight: 600, marginBottom: '1.25rem' }}>@ {analysis.company}</p>
+            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+              {[
+                { label: 'ATS Score',   value: analysis.atsScore,       color: '#10b981' },
+                { label: 'Keywords',    value: analysis.keywordMatch,   color: '#a855f7' },
+                { label: 'Projected',   value: analysis.estimatedScoreAfterImprovements, color: '#f59e0b' },
+                { label: 'Interests',   value: analysis.interestScore,  color: '#6366f1' },
+              ].map(({ label, value, color }) => (
+                <div key={label} style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '1.35rem', fontWeight: 900, color, lineHeight: 1 }}>{value || 0}%</p>
+                  <p style={{ fontSize: '0.58rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: CTAs */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', minWidth: '150px' }}>
+            <button onClick={handleViewReport} style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#6366f1,#a855f7)', color: 'white', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <FileText size={15} /> Full Report
             </button>
-            <button
-              onClick={() => navigate('/history')}
-              style={{ padding: '0.55rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(99,102,241,0.2)', background: 'rgba(99,102,241,0.06)', color: '#818cf8', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
-            >
-              <History size={13} /> All History
+            <button onClick={() => { sessionStorage.setItem('reanalyze', JSON.stringify({ company: analysis.company, jobRole: analysis.jobRole, force: true })); navigate('/resume'); }} style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(99,102,241,0.2)', background: 'rgba(99,102,241,0.05)', color: '#818cf8', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <RefreshCw size={14} /> Re-analyze
+            </button>
+            <button onClick={() => navigate('/history')} style={{ padding: '0.75rem 1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', background: 'transparent', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <History size={14} /> History
             </button>
           </div>
+        </div>
+      ) : (
+        /* No analysis yet — onboarding CTA */
+        <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.03))', border: '1px solid rgba(99,102,241,0.15)', borderRadius: '24px', padding: '3rem 2rem', marginBottom: '2rem', textAlign: 'center' }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '20px', background: 'linear-gradient(135deg,#6366f1,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <Brain size={32} color="white" />
+          </div>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'white', marginBottom: '0.75rem' }}>Start Your Career Analysis</h3>
+          <p style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: 500, marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
+            Upload your resume, select a company and role — get your Career Readiness Score, ATS analysis, skill gaps, and personalized roadmap in seconds.
+          </p>
+          <Link to="/resume" style={{ textDecoration: 'none' }}>
+            <button style={{ padding: '0.9rem 2rem', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg,#6366f1,#a855f7)', color: 'white', fontWeight: 800, fontSize: '1rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <Zap size={18} /> Analyze My Resume
+            </button>
+          </Link>
         </div>
       )}
 
-      <div className="main-grid">
-        {/* ── LEFT: CAREER MAPPING & INTERVIEW WORKFLOW ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          
-          {/* Integrated Intelligence Card */}
-          <GlassCard style={{ border: '1px solid rgba(99, 102, 241, 0.15)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white' }}>Intelligence Mapping</h3>
-                <p style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500, marginTop: '4px' }}>Optimal trajectory and placement preparation sync.</p>
-              </div>
-              <Badge variant="success" icon={CheckCircle2}>Synchronized</Badge>
-            </div>
+      {/* ── MAIN GRID ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-            <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-              <div style={{ padding: '2rem', borderRadius: '24px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.02)', textAlign: 'center', minWidth: '200px' }}>
-                 <p style={{ fontSize: '2.5rem', fontWeight: 900, color: 'white' }}>{bestMatch.confidence_score}%</p>
-                 <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Neural Alignment</p>
-              </div>
-              <div style={{ flex: 1 }}>
-                 <h4 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white', marginBottom: '0.5rem' }}>{bestMatch.domain}</h4>
-                 <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 500, marginBottom: '1.5rem' }}>Your profile matches the industry standard for {bestMatch.domain} architect roles.</p>
-                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <Link to="/interview-prep" style={{ textDecoration: 'none' }}>
-                      <Button variant="primary" size="sm" icon={MessagesSquare}>Start Prep</Button>
-                    </Link>
-                    <Link to="/skill-gap" style={{ textDecoration: 'none' }}>
-                      <Button variant="ghost" size="sm">Review Gaps</Button>
-                    </Link>
-                 </div>
-              </div>
-            </div>
-          </GlassCard>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-             <GlassCard>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}>
-                    <Zap size={20} />
+          {/* Top Missing Skills */}
+          {hasAnalysis && missingSkills.length > 0 && (
+            <GlassCard style={{ border: '1px solid rgba(244,63,94,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(244,63,94,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <AlertCircle size={18} color="#f43f5e" />
                   </div>
-                  <h4 style={{ fontWeight: 800, color: 'white' }}>Contextual Prep</h4>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {gaps.length > 0 ? gaps.map((gap, idx) => (
-                    <RecommendedItem key={idx} label={gap} type={idx === 0 ? "Technical" : (idx === 1 ? "System" : "Core")} />
-                  )) : (
-                    <p style={{ fontSize: '0.8rem', color: '#64748b' }}>No deficits identified. You are industry-ready.</p>
-                  )}
-                </div>
-             </GlassCard>
-             <GlassCard>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
-                    <Building2 size={20} />
+                  <div>
+                    <h4 style={{ fontWeight: 800, color: 'white', fontSize: '0.95rem' }}>Top Missing Skills</h4>
+                    <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>From your {analysis.company} — {analysis.jobRole} JD</p>
                   </div>
-                  <h4 style={{ fontWeight: 800, color: 'white' }}>Target Entities</h4>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {companies.length > 0 ? companies.map((comp, idx) => (
-                    <EntityItem key={idx} name={comp.name} match={`${comp.match}%`} color={comp.color} />
-                  )) : (
-                    <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Calculating company alignments...</p>
-                  )}
-                </div>
-             </GlassCard>
-          </div>
-
-          {/* ── RESUME INTELLIGENCE METRICS & CHARTS ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-             <GlassCard style={{ padding: '2rem' }}>
-                <h4 style={{ fontWeight: 800, color: 'white', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                   <Brain size={20} color="#6366f1" />
-                   Skill Distribution
-                </h4>
-                <div style={{ width: '100%', height: '240px' }}>
-                   <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" radius="80%" data={[
-                         { subject: 'Languages', A: stats.tech_score ? Math.round(stats.tech_score * 0.95) : 75 },
-                         { subject: 'Frameworks', A: stats.ats_score ? Math.round(stats.ats_score * 0.9) : 80 },
-                         { subject: 'Databases', A: stats.profile_completeness ? Math.round(stats.profile_completeness * 0.85) : 70 },
-                         { subject: 'Cloud', A: stats.tech_score ? Math.round(stats.tech_score * 0.8) : 65 },
-                         { subject: 'Tools', A: stats.ats_score ? Math.round(stats.ats_score * 0.88) : 85 }
-                      ]}>
-                         <PolarGrid stroke="rgba(255,255,255,0.05)" />
-                         <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={11} />
-                         <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#64748b" fontSize={9} />
-                         <Radar name="Skills" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.2} />
-                      </RadarChart>
-                   </ResponsiveContainer>
-                </div>
-             </GlassCard>
-
-             <GlassCard style={{ padding: '2rem' }}>
-                <h4 style={{ fontWeight: 800, color: 'white', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                   <Target size={20} color="#a855f7" />
-                   Target Alignment
-                </h4>
-                <div style={{ width: '100%', height: '240px' }}>
-                   <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={(companies || []).map(c => ({ name: c.name, Match: typeof c.match === 'string' ? parseInt(c.match) : (c.match || 0) }))}>
-                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                         <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                         <YAxis stroke="#64748b" fontSize={11} />
-                         <Tooltip contentStyle={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }} />
-                         <Bar dataKey="Match" fill="url(#colorMatch)" radius={[4, 4, 0, 0]} />
-                         <defs>
-                            <linearGradient id="colorMatch" x1="0" y1="0" x2="0" y2="1">
-                               <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                               <stop offset="95%" stopColor="#a855f7" stopOpacity={0.2}/>
-                            </linearGradient>
-                         </defs>
-                      </BarChart>
-                   </ResponsiveContainer>
-                </div>
-             </GlassCard>
-          </div>
-
-          {/* ── CAREER READINESS METRICS (upgraded from old Resume Diagnostics) ── */}
-          <GlassCard style={{ padding: '2rem' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-               <h4 style={{ fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <Brain size={20} color="#6366f1" />
-                  Career Readiness Score
-               </h4>
-               {stats.analysis_count > 0 ? (
-                 <Link to="/career-report" style={{ textDecoration: 'none' }}>
-                   <Button variant="ghost" size="sm" icon={ArrowRight}>Full Report</Button>
-                 </Link>
-               ) : (
-                 <Link to="/resume" style={{ textDecoration: 'none' }}>
-                   <Button variant="primary" size="sm" icon={Zap}>Analyze Resume</Button>
-                 </Link>
-               )}
-             </div>
-
-             {stats.career_readiness > 0 ? (
-               <>
-                 {/* Overall score display */}
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.75rem', padding: '1rem', borderRadius: '16px', background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.1)' }}>
-                   <div style={{ textAlign: 'center', minWidth: '70px' }}>
-                     <p style={{ fontSize: '2.25rem', fontWeight: 900, color: stats.career_readiness >= 70 ? '#10b981' : stats.career_readiness >= 55 ? '#6366f1' : '#f59e0b' }}>
-                       {stats.career_readiness}%
-                     </p>
-                     <p style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 800, textTransform: 'uppercase' }}>Readiness</p>
-                   </div>
-                   <div style={{ flex: 1 }}>
-                     {stats.target_role && (
-                       <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'white', marginBottom: '0.25rem' }}>
-                         {stats.target_role}
-                         {stats.target_company && <span style={{ color: '#818cf8' }}> @ {stats.target_company}</span>}
-                       </p>
-                     )}
-                     <ProgressBar
-                       progress={stats.career_readiness}
-                       height={8}
-                       color={stats.career_readiness >= 70 ? 'linear-gradient(90deg, #10b981, #6366f1)' : 'linear-gradient(90deg, #f59e0b, #f43f5e)'}
-                     />
-                   </div>
-                 </div>
-
-                 {/* Sub-score bars */}
-                 <ScoreBar label="Area of Interest" score={stats.interest_score} maxScore={25} color="#6366f1" delay={0} />
-                 <ScoreBar label="Projects" score={stats.project_score} maxScore={25} color="#a855f7" delay={0.1} />
-                 <ScoreBar label="Internships" score={stats.internship_score} maxScore={25} color="#f59e0b" delay={0.2} />
-                 <ScoreBar label="Certifications" score={stats.certification_score} maxScore={25} color="#10b981" delay={0.3} />
-
-                 {/* Quick stats */}
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '1rem' }}>
-                   <div style={{ textAlign: 'center' }}>
-                     <p style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>ATS Score</p>
-                     <p style={{ fontSize: '1.25rem', fontWeight: 900, color: '#10b981' }}>{stats.ats_score}%</p>
-                   </div>
-                   <div style={{ textAlign: 'center' }}>
-                     <p style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Keyword Match</p>
-                     <p style={{ fontSize: '1.25rem', fontWeight: 900, color: '#6366f1' }}>{stats.keyword_match}%</p>
-                   </div>
-                   <div style={{ textAlign: 'center' }}>
-                     <p style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Tech Score</p>
-                     <p style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f59e0b' }}>{stats.tech_score}%</p>
-                   </div>
-                 </div>
-               </>
-             ) : (
-               <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                 <Brain size={40} color="#334155" style={{ margin: '0 auto 1rem' }} />
-                 <p style={{ fontSize: '0.9rem', color: '#475569', fontWeight: 600, marginBottom: '1.25rem' }}>
-                   No career analysis yet. Upload your resume to get your Career Readiness Score.
-                 </p>
-                 <Link to="/resume" style={{ textDecoration: 'none', display: 'inline-block' }}>
-                   <Button variant="primary" size="sm" icon={Zap}>Analyze Now</Button>
-                 </Link>
-               </div>
-             )}
-          </GlassCard>
-
-          {/* New Vault Widget */}
-          <GlassCard>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                   <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
-                      <ShieldPlus size={20} />
-                   </div>
-                   <h4 style={{ fontWeight: 800, color: 'white' }}>Senior Guidance Feed</h4>
-                </div>
-                <Link to="/vault" style={{ textDecoration: 'none' }}>
-                   <Button variant="ghost" size="sm" icon={ArrowRight}>Enter Vault</Button>
+                <Link to="/skill-gap" style={{ textDecoration: 'none', fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  Full Matrix <ChevronRight size={13} />
                 </Link>
-             </div>
-             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
-                {recentVault.length > 0 ? recentVault.map(v => (
-                  <div key={v._id} style={{ padding: '1.25rem', borderRadius: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.3s' }} className="hover-card">
-                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }} />
-                          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'white' }}>{v.companyName}</span>
-                        </div>
-                        <Badge variant="ghost" size="sm" style={{ background: 'rgba(99, 102, 241, 0.05)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.1)' }}>{v.roundType}</Badge>
-                     </div>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'linear-gradient(45deg, #6366f1, #a855f7)', fontSize: '0.6rem', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-                          {v.contributorName?.charAt(0) || 'S'}
-                        </div>
-                        <p style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>By {v.contributorName}</p>
-                     </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {missingSkills.map(skill => (
+                  <span key={skill} style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.15)', color: '#f43f5e', fontSize: '0.78rem', fontWeight: 700 }}>{skill}</span>
+                ))}
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Quick Recommendations */}
+          {hasAnalysis && quickRecs.length > 0 && (
+            <GlassCard>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(99,102,241,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <TrendingUp size={18} color="#6366f1" />
                   </div>
-                )) : (
-                  <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>
-                    <p style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>No recent guidance manifests available.</p>
+                  <h4 style={{ fontWeight: 800, color: 'white', fontSize: '0.95rem' }}>Quick Recommendations</h4>
+                </div>
+                <Link to="/career-report" style={{ textDecoration: 'none', fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  See All <ChevronRight size={13} />
+                </Link>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {quickRecs.map(({ type, item, color }, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1rem', borderRadius: '12px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <span style={{ padding: '0.25rem 0.65rem', borderRadius: '8px', background: `${color}15`, color, fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>{type}</span>
+                    <span style={{ fontSize: '0.85rem', color: 'white', fontWeight: 600, flex: 1 }}>{typeof item === 'string' ? item : item?.name || item?.title || JSON.stringify(item)}</span>
+                    <ChevronRight size={14} color="#475569" />
                   </div>
-                )}
-             </div>
-          </GlassCard>
+                ))}
+              </div>
+            </GlassCard>
+          )}
+
+          {/* Platform Navigation Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            {[
+              { path: '/careers',      icon: Briefcase,     label: 'Career Mapping',   desc: 'Readiness breakdown & roles',     color: '#6366f1', badge: hasAnalysis ? `${analysis?.careerReadiness || 0}%` : null },
+              { path: '/skill-gap',    icon: Target,        label: 'Skill Matrix',     desc: 'Matched & missing skills',         color: '#a855f7', badge: hasAnalysis ? `${(analysis?.matchedSkills||[]).length} matched` : null },
+              { path: '/companies',    icon: Building2,     label: 'Company Explorer', desc: 'Browse roles & JDs',               color: '#10b981', badge: 'Live' },
+              { path: '/interview-prep', icon: MessagesSquare, label: 'Interview Prep', desc: 'Questions by company & round',   color: '#f59e0b', badge: null },
+            ].map(({ path, icon: Icon, label, desc, color, badge }) => (
+              <Link key={path} to={path} style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer', transition: 'all 0.25s', display: 'flex', alignItems: 'center', gap: '1rem' }}
+                  onMouseOver={e => { e.currentTarget.style.border = `1px solid ${color}30`; e.currentTarget.style.background = `${color}08`; }}
+                  onMouseOut={e => { e.currentTarget.style.border = '1px solid rgba(255,255,255,0.04)'; e.currentTarget.style.background = 'rgba(255,255,255,0.01)'; }}
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={18} color={color} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 800, color: 'white', fontSize: '0.875rem', marginBottom: '2px' }}>{label}</p>
+                    <p style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 500 }}>{desc}</p>
+                  </div>
+                  {badge && (
+                    <span style={{ padding: '0.2rem 0.55rem', borderRadius: '8px', background: `${color}15`, color, fontSize: '0.6rem', fontWeight: 800, flexShrink: 0 }}>{badge}</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
-        {/* ── RIGHT: PLACEMENT ACTIVITY FEED ── */}
-        <GlassCard>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(99,102,241,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                <Rocket size={24} />
-              </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white' }}>Placement Radar</h3>
-           </div>
-           
-           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {activityLogs.length > 0 ? activityLogs.map((item, idx) => (
-                <ActivityItem key={idx} time={item.time} title={item.title} body={item.body} type={item.type} />
-              )) : (
-                <ActivityItem time="LIVE" title="Welcome" body="Complete your resume analysis to see real-time placement radar data." type="primary" />
-              )}
-            </div>
+        {/* ── RIGHT COLUMN: Activity + Quick Actions ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-           <Link to="/companies" style={{ marginTop: '3rem', display: 'block' }}>
-              <Button variant="ghost" fullWidth icon={Building2}>Explore Company Archive</Button>
-           </Link>
-        </GlassCard>
+          {/* Analysis Status Card */}
+          <GlassCard style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16,185,129,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Cpu size={18} color="#10b981" />
+              </div>
+              <h4 style={{ fontWeight: 800, color: 'white', fontSize: '0.9rem' }}>Platform Status</h4>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                { label: 'AI Analysis', status: hasAnalysis ? 'Completed' : 'Not Started', ok: hasAnalysis },
+                { label: 'Career Mapping', status: hasAnalysis ? 'Ready' : 'Pending Analysis', ok: hasAnalysis },
+                { label: 'Skill Matrix', status: hasAnalysis ? 'Synced' : 'Pending Analysis', ok: hasAnalysis },
+                { label: 'Company Match', status: hasAnalysis ? `${analysis?.company || '—'}` : 'No Target', ok: hasAnalysis },
+              ].map(({ label, status, ok }) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>{label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: ok ? '#10b981' : '#475569' }} />
+                    <span style={{ fontSize: '0.72rem', color: ok ? '#10b981' : '#475569', fontWeight: 700 }}>{status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* Interview Suite Quick Links */}
+          <GlassCard style={{ padding: '1.5rem' }}>
+            <p style={{ fontSize: '0.65rem', color: '#475569', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>Interview Suite</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                { path: '/mock-interview',   icon: Cpu,         label: 'Mock Interview',   color: '#6366f1' },
+                { path: '/interview-vault',  icon: BookOpen,    label: 'Interview Vault',  color: '#a855f7' },
+                { path: '/companies',        icon: Building2,   label: 'Explore Companies', color: '#10b981' },
+              ].map(({ path, icon: Icon, label, color }) => (
+                <Link key={path} to={path} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '10px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.2s', color: '#94a3b8', fontWeight: 600, fontSize: '0.82rem' }}
+                  onMouseOver={e => { e.currentTarget.style.background = `${color}08`; e.currentTarget.style.color = color; }}
+                  onMouseOut={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.01)'; e.currentTarget.style.color = '#94a3b8'; }}
+                >
+                  <Icon size={16} /> {label}
+                  <ArrowRight size={13} style={{ marginLeft: 'auto' }} />
+                </Link>
+              ))}
+            </div>
+          </GlassCard>
+
+          {/* Recent Activity from dashboard API */}
+          {dashData?.recentActivity?.length > 0 && (
+            <GlassCard style={{ padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.65rem', color: '#475569', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>Placement Radar</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {dashData.recentActivity.slice(0, 3).map((msg, i) => (
+                  <div key={i} style={{ paddingLeft: '1rem', borderLeft: '2px solid rgba(99,102,241,0.2)', fontSize: '0.78rem', color: '#64748b', fontWeight: 500, lineHeight: 1.4 }}>
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          )}
+        </div>
       </div>
     </div>
   );
 };
-
-const StatCard = ({ icon, value, label, trend, color }) => (
-  <GlassCard style={{ padding: '1.75rem' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-      <div style={{ color }}>{icon}</div>
-      <Badge variant={trend.includes('+') ? 'success' : 'primary'}>{trend}</Badge>
-    </div>
-    <h4 style={{ fontSize: '2rem', fontWeight: 900, color: 'white', marginBottom: '0.25rem' }}>{value}</h4>
-    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</p>
-  </GlassCard>
-);
-
-const RecommendedItem = ({ label, type }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', borderRadius: '10px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)' }}>
-     <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white' }}>{label}</span>
-     <Badge variant="ghost" size="sm">{type}</Badge>
-  </div>
-);
-
-const EntityItem = ({ name, match, color }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
-        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'white' }}>{name}</span>
-     </div>
-     <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#10b981' }}>{match} Match</span>
-  </div>
-);
-
-const ActivityItem = ({ time, title, body, type }) => (
-  <div style={{ position: 'relative', paddingLeft: '1.5rem', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
-    <div style={{ position: 'absolute', left: '-4.5px', top: '4px', width: '8px', height: '8px', borderRadius: '50%', background: type === 'success' ? '#10b981' : (type === 'warning' ? '#f59e0b' : (type === 'primary' ? '#6366f1' : '#475569')) }} />
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.25rem' }}>
-      <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'white' }}>{title}</h5>
-      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: time === 'LIVE' ? '#6366f1' : '#475569' }}>{time}</span>
-    </div>
-    <p style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748b', lineHeight: 1.4 }}>{body}</p>
-  </div>
-);
 
 export default Dashboard;

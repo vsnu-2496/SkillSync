@@ -16,7 +16,8 @@ const {
   getCompaniesAndRoles,
   getAnalysisHistory,
   getAnalysisById,
-  deleteAnalysis
+  deleteAnalysis,
+  getLatestAnalysis
 } = require('../controllers/resumeController');
 const upload = require('../middleware/upload');
 const { authMiddleware } = require('../middleware/auth');
@@ -50,6 +51,7 @@ router.get('/data',     authMiddleware, getResumeData);
 // DELETE /api/resume/history/:id     — Delete one analysis
 router.post('/analyze-career', authMiddleware, aiTimeout(150000), upload.single('resume'), analyzeCareer);
 router.get('/companies',       authMiddleware, getCompaniesAndRoles);
+router.get('/latest',          authMiddleware, getLatestAnalysis);   // ← Single Source of Truth
 router.get('/history',         authMiddleware, getAnalysisHistory);
 router.get('/history/:id',     authMiddleware, getAnalysisById);
 router.delete('/history/:id',  authMiddleware, deleteAnalysis);

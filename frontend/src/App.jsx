@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AnalysisProvider } from './context/AnalysisContext';
 import AppLayout from './components/layout/AppLayout';
 import NotificationManager from './components/NotificationManager';
 
@@ -33,7 +34,9 @@ const LoadingFallback = () => (
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <LoadingFallback />;
-  return user ? <AppLayout>{children}</AppLayout> : <Navigate to="/login" />;
+  return user
+    ? <AnalysisProvider><AppLayout>{children}</AppLayout></AnalysisProvider>
+    : <Navigate to="/login" />;
 };
 
 function App() {
