@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/layout/PageHeader';
 import { Button, GlassCard, Badge, Skeleton } from '../components/ui';
+import { useAnalysis } from '../context/AnalysisContext';
 
 const STEPS = ['Upload Resume', 'Select Target', 'AI Analysis', 'Complete'];
 
@@ -45,6 +46,7 @@ const ResumeUpload = () => {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+  const { refresh: refreshAnalysis } = useAnalysis();
 
   // ─── Re-analyze pre-fill ─────────────────────────────────────────────
   // When arriving from AnalysisHistory "Re-analyze" button, sessionStorage
@@ -165,6 +167,7 @@ const ResumeUpload = () => {
 
       if (response.data.success) {
         await refreshUser();
+        if (refreshAnalysis) await refreshAnalysis();
         setForceReanalyze(false); // reset after use
         setStep(4);
         // Store result in sessionStorage and navigate to report page

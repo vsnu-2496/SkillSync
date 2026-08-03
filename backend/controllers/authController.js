@@ -140,34 +140,52 @@ exports.getProfile = async (req, res) => {
 // @route   PUT /api/auth/profile/update
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, university, yearLevel, department, role, profileImage, settings } = req.body;
+    const {
+      name, university, yearLevel, department, role, profileImage,
+      settings, interestMatrix, targetCompany, targetRole,
+      currentPassword, newPassword
+    } = req.body;
     
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (university !== undefined) updateData.university = university;
-    if (yearLevel !== undefined) updateData.yearLevel = yearLevel;
-    if (department !== undefined) updateData.department = department;
-    if (role) updateData.role = role;
-    if (profileImage !== undefined) updateData.profileImage = profileImage;
-    if (settings) {
-      updateData.settings = {
-        theme: settings.theme ?? 'dark',
-        notifications: settings.notifications ?? true,
-        privacyMode: settings.privacyMode ?? false
-      };
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { $set: updateData },
-      { new: true }
-    ).select('-password');
-
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Password change check
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Current password is required to set a new password.' });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Current password is incorrect.' });
+      }
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+    }
+
+    if (name) user.name = name;
+    if (university !== undefined) user.university = university;
+    if (yearLevel !== undefined) user.yearLevel = yearLevel;
+    if (department !== undefined) user.department = department;
+    if (role) user.role = role;
+    if (profileImage !== undefined) user.profileImage = profileImage;
+    if (targetCompany !== undefined) user.targetCompany = targetCompany;
+    if (targetRole !== undefined) user.targetRole = targetRole;
+    if (Array.isArray(interestMatrix)) user.interestMatrix = interestMatrix;
+    
+    if (settings) {
+      user.settings = {
+        theme: settings.theme ?? user.settings?.theme ?? 'dark',
+        notifications: settings.notifications ?? user.settings?.notifications ?? true,
+        privacyMode: settings.privacyMode ?? user.settings?.privacyMode ?? false
+      };
+    }
+
+    await user.save();
+
     const userObj = user.toObject();
+    delete userObj.password;
     userObj.hasResume = user.skills.length > 0;
     res.json(userObj);
   } catch (err) {

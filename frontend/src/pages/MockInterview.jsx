@@ -19,6 +19,7 @@ import {
 import PageHeader from '../components/layout/PageHeader';
 import { Button, GlassCard, Badge, ProgressBar } from '../components/ui';
 import api from '../api/axiosConfig';
+import { useAnalysis } from '../context/AnalysisContext';
 
 const DOMAIN_OPTIONS = [
   'Web Development',
@@ -31,12 +32,24 @@ const DOMAIN_OPTIONS = [
 ];
 
 const MockInterview = () => {
+  const { analysis } = useAnalysis();
   // Navigation Phases: 'setup' | 'session' | 'results'
   const [phase, setPhase] = useState('setup');
   
   // Setup Options
-  const [domain, setDomain] = useState('Web Development');
-  const [difficulty, setDifficulty] = useState('medium');
+  const [domain, setDomain] = useState(analysis?.jobRole || 'Web Development');
+  const [difficulty, setDifficulty] = useState(
+    (analysis?.careerReadiness || 65) >= 75 ? 'hard' : (analysis?.careerReadiness || 65) >= 55 ? 'medium' : 'easy'
+  );
+
+  useEffect(() => {
+    if (analysis?.jobRole) {
+      setDomain(analysis.jobRole);
+    }
+    if (analysis?.careerReadiness) {
+      setDifficulty(analysis.careerReadiness >= 75 ? 'hard' : analysis.careerReadiness >= 55 ? 'medium' : 'easy');
+    }
+  }, [analysis]);
   
   // Live Session State
   const [session, setSession] = useState(null);

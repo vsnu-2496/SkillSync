@@ -9,14 +9,13 @@ import NotificationManager from './components/NotificationManager';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const ResumeUpload = lazy(() => import('./pages/ResumeUpload'));
 const CareerRecommendations = lazy(() => import('./pages/CareerRecommendations'));
-const SkillGap = lazy(() => import('./pages/SkillGap'));
 const InterviewPrep = lazy(() => import('./pages/InterviewPrep'));
 const CompanyExplorer = lazy(() => import('./pages/CompanyExplorer'));
 const InterviewVault = lazy(() => import('./pages/InterviewVault'));
-const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
+const Billing = lazy(() => import('./pages/Billing'));
 const MockInterview = lazy(() => import('./pages/MockInterview'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -51,18 +50,17 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             
-            {/* Protected Portal Routes (SkillSync x EasyPrep Unified) */}
+            {/* Protected Portal Routes (SkillSync Career Intelligence Platform) */}
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/resume" element={<PrivateRoute><ResumeUpload /></PrivateRoute>} />
             <Route path="/careers" element={<PrivateRoute><CareerRecommendations /></PrivateRoute>} />
-            <Route path="/skill-gap" element={<PrivateRoute><SkillGap /></PrivateRoute>} />
             
-            {/* EasyPrep Execution Modules */}
+            {/* Execution Modules */}
+            <Route path="/companies" element={<PrivateRoute><CompanyExplorer /></PrivateRoute>} />
             <Route path="/interview-prep" element={<PrivateRoute><InterviewPrep /></PrivateRoute>} />
             <Route path="/mock-interview" element={<PrivateRoute><MockInterview /></PrivateRoute>} />
-            <Route path="/companies" element={<PrivateRoute><CompanyExplorer /></PrivateRoute>} />
             <Route path="/interview-vault" element={<PrivateRoute><InterviewVault /></PrivateRoute>} />
-            <Route path="/how-it-works" element={<PrivateRoute><HowItWorks /></PrivateRoute>} />
+            <Route path="/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
             <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
             
             {/* Career Readiness Report */}

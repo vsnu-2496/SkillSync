@@ -15,8 +15,10 @@ import {
 import PageHeader from '../components/layout/PageHeader';
 import { Button, GlassCard, Badge, ProgressBar } from '../components/ui';
 import api from '../api/axiosConfig';
+import { useAnalysis } from '../context/AnalysisContext';
 
 const InterviewPrep = () => {
+  const { analysis } = useAnalysis();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userDomain, setUserDomain] = useState("Web Development");
@@ -55,11 +57,11 @@ const InterviewPrep = () => {
         api.get('/dashboard'),
         api.get('/interview/topics')
       ]);
-      const domain = dRes.data.data.topRole || "Web Development";
+      const domain = analysis?.jobRole || dRes.data?.data?.topRole || "Web Development";
       const cleanDomain = domain === "Not Analyzed" ? "Web Development" : domain;
       setUserDomain(cleanDomain);
-      setReadiness(dRes.data.data.metrics.prepReadiness);
-      setTopics(tRes.data.topics || []);
+      setReadiness(analysis?.careerReadiness || dRes.data?.data?.metrics?.prepReadiness || 65);
+      setTopics(tRes.data?.topics || []);
       setLoading(false);
     } catch (err) {
       console.error("Failed to load interview prep initial data:", err);

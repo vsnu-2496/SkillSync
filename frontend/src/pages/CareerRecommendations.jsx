@@ -199,8 +199,8 @@ const CareerRecommendations = () => {
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white' }}>Recommended Action Trajectory</h3>
             <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '2px' }}>Next steps to bridge your readiness gaps for {analysis.company}</p>
           </div>
-          <Link to="/skill-gap" style={{ textDecoration: 'none' }}>
-            <Button variant="ghost" size="sm" icon={ArrowRight}>View Skill Matrix</Button>
+          <Link to="/career-report" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" size="sm" icon={ArrowRight}>View Full Report</Button>
           </Link>
         </div>
 

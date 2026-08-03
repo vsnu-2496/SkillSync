@@ -26,6 +26,7 @@ import api from '../api/axiosConfig';
 import PageHeader from '../components/layout/PageHeader';
 import { Button, GlassCard, Badge, Input } from '../components/ui';
 import Modal from '../components/ui/Modal';
+import { useAnalysis } from '../context/AnalysisContext';
 
 /**
  * InterviewVault
@@ -34,6 +35,7 @@ import Modal from '../components/ui/Modal';
  */
 const InterviewVault = () => {
   const { user } = useAuth();
+  const { analysis } = useAnalysis();
   const [experiences, setExperiences] = useState([]);
   const [stats, setStats] = useState({ companies: 0, questions: 0, contributors: 0 });
   const [loading, setLoading] = useState(true);

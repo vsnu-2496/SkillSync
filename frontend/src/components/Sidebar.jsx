@@ -4,8 +4,6 @@ import {
   LayoutDashboard,
   FileText,
   Briefcase,
-  Target,
-  BookOpen,
   LogOut,
   Sparkles,
   Settings,
@@ -14,7 +12,6 @@ import {
   MessagesSquare,
   Building2,
   Workflow,
-  Cpu,
   ShieldPlus,
   Brain,
   History
@@ -23,18 +20,16 @@ import { useAuth } from '../context/AuthContext';
 
 const INTELLIGENCE_ITEMS = [
   { name: 'Dashboard',          icon: LayoutDashboard, path: '/dashboard' },
-  { name: 'Neural Analysis',    icon: FileText,         path: '/resume' },
-  { name: 'Analysis History',   icon: History,          path: '/history' },
-  { name: 'Career Mapping',     icon: Briefcase,        path: '/careers' },
-  { name: 'Skill Matrix',       icon: Target,           path: '/skill-gap' },
-  { name: 'System Logic',       icon: Cpu,              path: '/how-it-works' },
+  { name: 'Neural Analysis',    icon: FileText,        path: '/resume' },
+  { name: 'Analysis History',   icon: History,         path: '/history' },
+  { name: 'Career Mapping',     icon: Briefcase,       path: '/careers' },
 ];
 
 const EXECUTION_ITEMS = [
+  { name: 'Company Explorer', icon: Building2,      path: '/companies' },
   { name: 'Interview Prep',   icon: MessagesSquare, path: '/interview-prep' },
   { name: 'Mock Interview',   icon: Brain,          path: '/mock-interview' },
-  { name: 'Company Explorer', icon: Building2,      path: '/companies' },
-  { name: 'Interview Vault',   icon: ShieldPlus,     path: '/interview-vault' },
+  { name: 'Interview Vault',  icon: ShieldPlus,     path: '/interview-vault' },
 ];
 
 const ADMIN_ITEMS = [
@@ -89,7 +84,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <Sparkles size={16} />
           </div>
           <div style={{ lineHeight: 1 }}>
-            <p style={{ fontSize: '1rem', fontWeight: 900, color: 'white', tracking: '-0.02em' }}>SkillSync AI</p>
+            <p style={{ fontSize: '1rem', fontWeight: 900, color: 'white', letterSpacing: '-0.02em' }}>SkillSync AI</p>
             <p style={{ fontSize: '0.6rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: '2px' }}>Professional</p>
           </div>
         </div>
@@ -127,7 +122,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Execution Group (Hidden for Admins) */}
         {user?.role !== 'admin' && (
           <>
-            <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution (EasyPrep)</p>
+            <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Execution</p>
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '2.5rem' }}>
               {EXECUTION_ITEMS.map((item) => (
                 <SidebarLink key={item.path} item={item} active={location.pathname === item.path} />
@@ -151,14 +146,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Configuration Group */}
         <p style={{ padding: '0 0.5rem', marginBottom: '1rem', fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Configuration</p>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <Link to="#" style={linkStyle(false)}>
-            <CreditCard size={18} />
-            <span>Billing</span>
-          </Link>
-          <Link to="/settings" style={linkStyle(location.pathname === '/settings')}>
-            <Settings size={18} />
-            <span>Settings</span>
-          </Link>
+          <SidebarLink item={{ name: 'Billing', icon: CreditCard, path: '/billing' }} active={location.pathname === '/billing'} />
+          <SidebarLink item={{ name: 'Settings', icon: Settings, path: '/settings' }} active={location.pathname === '/settings'} />
           {deferredPrompt && (
             <button 
               onClick={handleInstall}

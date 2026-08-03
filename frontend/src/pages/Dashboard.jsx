@@ -183,8 +183,8 @@ const Dashboard = () => {
                     <p style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>From your {analysis.company} — {analysis.jobRole} JD</p>
                   </div>
                 </div>
-                <Link to="/skill-gap" style={{ textDecoration: 'none', fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  Full Matrix <ChevronRight size={13} />
+                <Link to="/careers" style={{ textDecoration: 'none', fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  Career Mapping <ChevronRight size={13} />
                 </Link>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -225,9 +225,9 @@ const Dashboard = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {[
               { path: '/careers',      icon: Briefcase,     label: 'Career Mapping',   desc: 'Readiness breakdown & roles',     color: '#6366f1', badge: hasAnalysis ? `${analysis?.careerReadiness || 0}%` : null },
-              { path: '/skill-gap',    icon: Target,        label: 'Skill Matrix',     desc: 'Matched & missing skills',         color: '#a855f7', badge: hasAnalysis ? `${(analysis?.matchedSkills||[]).length} matched` : null },
               { path: '/companies',    icon: Building2,     label: 'Company Explorer', desc: 'Browse roles & JDs',               color: '#10b981', badge: 'Live' },
               { path: '/interview-prep', icon: MessagesSquare, label: 'Interview Prep', desc: 'Questions by company & round',   color: '#f59e0b', badge: null },
+              { path: '/mock-interview', icon: Cpu,         label: 'Mock Interview',   desc: 'AI Voice & Tech practice',        color: '#a855f7', badge: null },
             ].map(({ path, icon: Icon, label, desc, color, badge }) => (
               <Link key={path} to={path} style={{ textDecoration: 'none' }}>
                 <div style={{ padding: '1.25rem', borderRadius: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer', transition: 'all 0.25s', display: 'flex', alignItems: 'center', gap: '1rem' }}
